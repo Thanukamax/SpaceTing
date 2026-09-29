@@ -1751,8 +1751,15 @@
       cosmicAudio = new CosmicAudioEngine();
 
       // 3. Scroll & Wheel listeners
+      // The full-screen WebGL canvas absorbs wheel events before they bubble to window.
+      // Attach directly to canvas-container only (no window wheel listener) to avoid double-firing.
       window.addEventListener('scroll', updateScrollMorph, { passive: true });
-      window.addEventListener('wheel', onWheelScroll, { passive: true });
+      const canvasContainer = document.getElementById('canvas-container');
+      if (canvasContainer) {
+        canvasContainer.addEventListener('wheel', onWheelScroll, { passive: true });
+      } else {
+        window.addEventListener('wheel', onWheelScroll, { passive: true });
+      }
 
       // 4. Top-Left 3-Line Hamburger Menu
       const hamburgerBtn = document.getElementById('nav-hamburger-btn');
