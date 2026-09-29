@@ -1320,9 +1320,7 @@
           wheelScrollAccumulator += deltaY * 0.0035;
           wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
           touchStartY = e.touches[0].clientY;
-          const maxScroll = Math.max(window.innerHeight * 0.9, 350);
-          window.scrollTo({ top: wheelScrollAccumulator * maxScroll, behavior: 'auto' });
-          if (typeof updateScrollMorph === 'function') updateScrollMorph();
+          updateScrollMorph();
         }
       }
     }
@@ -1726,18 +1724,13 @@
     // ----------------------------------------------------
     function updateScrollMorph() {
       if (!introComplete) return;
-      const maxScroll = Math.max(window.innerHeight * 0.9, 350);
-      const scrollProgress = THREE.MathUtils.clamp(window.scrollY / maxScroll, 0.0, 1.0);
-      targetMorph = THREE.MathUtils.clamp(Math.max(scrollProgress, wheelScrollAccumulator), 0.0, 1.0);
+      targetMorph = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
     }
 
     function onWheelScroll(e) {
-      console.log('[WHEEL] deltaY:', e.deltaY, 'introComplete:', introComplete, 'accumulator:', wheelScrollAccumulator);
       if (!introComplete) return;
-      wheelScrollAccumulator += e.deltaY * 0.0022;
+      wheelScrollAccumulator += e.deltaY * 0.0024;
       wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
-      const maxScroll = Math.max(window.innerHeight * 0.9, 350);
-      window.scrollTo({ top: wheelScrollAccumulator * maxScroll, behavior: 'auto' });
       updateScrollMorph();
     }
 
