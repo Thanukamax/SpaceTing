@@ -1732,6 +1732,7 @@
     }
 
     function onWheelScroll(e) {
+      console.log('[WHEEL] deltaY:', e.deltaY, 'introComplete:', introComplete, 'accumulator:', wheelScrollAccumulator);
       if (!introComplete) return;
       wheelScrollAccumulator += e.deltaY * 0.0022;
       wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
@@ -1751,15 +1752,10 @@
       cosmicAudio = new CosmicAudioEngine();
 
       // 3. Scroll & Wheel listeners
-      // The full-screen WebGL canvas absorbs wheel events before they bubble to window.
-      // Attach directly to canvas-container only (no window wheel listener) to avoid double-firing.
+      // Use document-level listener — guaranteed to capture wheel events
+      // regardless of which full-screen element is on top.
       window.addEventListener('scroll', updateScrollMorph, { passive: true });
-      const canvasContainer = document.getElementById('canvas-container');
-      if (canvasContainer) {
-        canvasContainer.addEventListener('wheel', onWheelScroll, { passive: true });
-      } else {
-        window.addEventListener('wheel', onWheelScroll, { passive: true });
-      }
+      document.addEventListener('wheel', onWheelScroll, { passive: true });
 
       // 4. Top-Left 3-Line Hamburger Menu
       const hamburgerBtn = document.getElementById('nav-hamburger-btn');
