@@ -266,6 +266,15 @@
       <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 group-hover:text-starlight">C</span>
     </button>
 
+    <!-- Nebula Rotation Direction Toggle Button -->
+    <button id="rot-direction-toggle" 
+            class="group flex items-center gap-2 px-3.5 py-2 rounded-full glass-card hover:border-starlight/40 text-xs font-mono text-slate-300 hover:text-starlight transition-all duration-300 shadow-xl"
+            title="Toggle Nebula Drift Direction: Left-to-Right vs Right-to-Left (Shortcut: D)">
+      <i data-lucide="compass" class="w-3.5 h-3.5 text-twilight group-hover:text-starlight transition-transform group-hover:rotate-45 duration-300"></i>
+      <span id="rot-direction-text" class="text-[11px] uppercase tracking-wider font-semibold text-starlight">DIR: L ➔ R</span>
+      <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 group-hover:text-starlight">D</span>
+    </button>
+
     <!-- Alternate Index: NGC 6302 Butterfly Nebula Sky -->
     <a href="nebula.html" 
        class="group flex items-center gap-2 px-3.5 py-2 rounded-full glass-card border-orange-500/30 bg-orange-500/10 text-xs font-mono text-amber-300 hover:text-white hover:border-orange-400/50 transition-all duration-300 shadow-xl"
@@ -1156,6 +1165,7 @@
     let hasExploded = false;
     let introComplete = false;
     let isUiVisible = false;
+    let rotSpeedDirection = 1.0; // 1.0 = Left to Right (default), -1.0 = Right to Left
 
     // Fluid cursor tracking in 3D galaxy plane
     const mouse2D = new THREE.Vector2(0, 0);
@@ -1876,8 +1886,8 @@
         const posAttr = galaxyMesh.geometry.attributes.position;
         const posArr = posAttr.array;
 
-        // Spiral rotation unwinds as the explosion expands in opposite direction
-        const unwindAngle = -(1.0 - ease) * 1.25;
+        // Spiral rotation unwinds harmoniously in the active rotation direction
+        const unwindAngle = (1.0 - ease) * 1.35 * rotSpeedDirection;
 
         for (let i = 0; i < starCount; i++) {
           const i3 = i * 3;
@@ -1974,7 +1984,8 @@
       const radiusSq = radius * radius;
       const posAttr = galaxyMesh.geometry.attributes.position;
       const posArr = posAttr.array;
-      const rotSpeed = -0.0012;
+      // Stellar stream rotation (positive rotSpeedDirection flows Left to Right)
+      const rotSpeed = 0.0022 * rotSpeedDirection;
 
       const stickDirX = cursorSpeed > 0.0001 ? cursorVx / cursorSpeed : 0;
       const stickDirY = cursorSpeed > 0.0001 ? cursorVy / cursorSpeed : 0;
@@ -2409,6 +2420,7 @@
       const items = [
         { label: "Replay 3D Sand & Supernova Intro", icon: "rotate-ccw", action: () => { closeCommandPalette(); replayIntroAnimation(); } },
         { label: "Toggle UI / Observation Mode (Shortcut: U)", icon: "layout", action: () => { closeCommandPalette(); toggleUiVisibility(); } },
+        { label: "Toggle Nebula Drift Direction (Shortcut: D)", icon: "compass", action: () => { closeCommandPalette(); toggleRotationDirection(); } },
         { label: "Toggle Ambient Drift Audio", icon: "volume-2", action: () => document.getElementById('audio-toggle').click() },
         { label: "Broadcast New Signal", icon: "satellite", action: () => { closeCommandPalette(); openModal('transmit-modal'); } },
         { label: "Read Astra Manifesto", icon: "book-open", action: () => { closeCommandPalette(); openModal('manifesto-modal'); } },
@@ -2483,6 +2495,20 @@
     // Observation Mode (Pure Cosmic Background Mode)
     function toggleObservationMode() {
       toggleUiVisibility();
+    }
+
+    // Toggle Nebula Drift Direction: Left-to-Right (rotSpeedDirection = 1) vs Right-to-Left (rotSpeedDirection = -1)
+    function toggleRotationDirection(forceDir) {
+      if (typeof forceDir === 'number') {
+        rotSpeedDirection = forceDir;
+      } else {
+        rotSpeedDirection = -rotSpeedDirection;
+      }
+      if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
+      const isLtoR = rotSpeedDirection > 0;
+      const text = document.getElementById('rot-direction-text');
+      if (text) text.textContent = isLtoR ? 'DIR: L ➔ R' : 'DIR: R ➔ L';
+      showToast(isLtoR ? "// NEBULA DRIFT: LEFT TO RIGHT (L ➔ R)" : "// NEBULA DRIFT: RIGHT TO LEFT (R ➔ L)");
     }
 
     // Broadcast Form Handler
@@ -2663,6 +2689,12 @@
         replayBtn.addEventListener('click', replayIntroAnimation);
       }
 
+      // Rotation Direction Toggle Button Listener
+      const rotDirBtn = document.getElementById('rot-direction-toggle');
+      if (rotDirBtn) {
+        rotDirBtn.addEventListener('click', () => toggleRotationDirection());
+      }
+
       // 9. Keyboard Shortcuts
       window.addEventListener('keydown', (e) => {
         // Space or M key toggles audio (when not typing in an input)
@@ -2673,6 +2705,10 @@
         // R key replays the 3D sand grain fall & supernova intro
         if ((e.key === 'r' || e.key === 'R') && !e.target.matches('input, textarea')) {
           replayIntroAnimation();
+        }
+        // D key toggles Nebula drift direction (Left-to-Right vs Right-to-Left)
+        if ((e.key === 'd' || e.key === 'D') && !e.target.matches('input, textarea')) {
+          toggleRotationDirection();
         }
         // C key toggles ASTRA Constellation vs Free Nebula Drift
         if ((e.key === 'c' || e.key === 'C') && !e.target.matches('input, textarea')) {
