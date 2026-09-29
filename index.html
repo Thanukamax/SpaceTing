@@ -277,11 +277,11 @@
 
     <!-- Toggle UI Visibility Button -->
     <button id="ui-visibility-toggle" 
-            class="group flex items-center gap-2 px-3.5 py-2 rounded-full glass-card hover:border-starlight/40 text-xs font-mono text-slate-400 hover:text-starlight transition-all duration-300 shadow-xl"
-            title="Toggle UI Text Blocks (Shortcut: U)">
-      <i data-lucide="layout" class="w-3.5 h-3.5 text-twilight group-hover:text-starlight transition-colors"></i>
-      <span id="ui-visibility-text" class="text-[11px] uppercase tracking-wider">Show UI</span>
-      <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 group-hover:text-starlight">U</span>
+            class="group flex items-center gap-2 px-3.5 py-2 rounded-full glass-card border-starlight/30 hover:border-starlight/60 bg-starlight/10 hover:bg-starlight/20 text-xs font-mono text-starlight hover:text-white transition-all duration-300 shadow-xl"
+            title="Toggle UI Interface (Shortcut: U)">
+      <i data-lucide="layout" class="w-3.5 h-3.5 text-starlight group-hover:text-white transition-colors"></i>
+      <span id="ui-visibility-text" class="text-[11px] uppercase tracking-wider font-semibold">SHOW UI</span>
+      <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 border border-white/20 text-starlight group-hover:text-white">U</span>
     </button>
   </div>
 
@@ -1155,6 +1155,7 @@
     let introStartTime = 0;
     let hasExploded = false;
     let introComplete = false;
+    let isUiVisible = false;
 
     // Fluid cursor tracking in 3D galaxy plane
     const mouse2D = new THREE.Vector2(-999, -999);
@@ -1773,17 +1774,19 @@
           galaxyCoreMesh.scale.set(coreScale, coreScale, 1);
         }
 
-        // 4. Reveal UI smoothly right as the nebula reaches full blossom (at t = 3.1s)
+        // 4. Reveal Minimal HUD controls right as the nebula reaches full blossom (at t = 3.1s)
         if (introT >= 3.1) {
-          const mainUi = document.getElementById('main-ui');
-          if (mainUi && mainUi.classList.contains('opacity-0')) {
-            mainUi.classList.remove('opacity-0', 'pointer-events-none');
-            mainUi.classList.add('opacity-100');
-          }
           const topHud = document.getElementById('top-hud');
           if (topHud && topHud.classList.contains('opacity-0')) {
             topHud.classList.remove('opacity-0', 'pointer-events-none');
             topHud.classList.add('opacity-100');
+          }
+          if (isUiVisible) {
+            const mainUi = document.getElementById('main-ui');
+            if (mainUi && mainUi.classList.contains('opacity-0')) {
+              mainUi.classList.remove('opacity-0', 'pointer-events-none');
+              mainUi.classList.add('opacity-100');
+            }
           }
         }
 
@@ -1811,15 +1814,17 @@
         }
         posAttr.needsUpdate = true;
 
-        const mainUi = document.getElementById('main-ui');
-        if (mainUi) {
-          mainUi.classList.remove('opacity-0', 'pointer-events-none');
-          mainUi.classList.add('opacity-100');
-        }
         const topHud = document.getElementById('top-hud');
         if (topHud) {
           topHud.classList.remove('opacity-0', 'pointer-events-none');
           topHud.classList.add('opacity-100');
+        }
+        if (isUiVisible) {
+          const mainUi = document.getElementById('main-ui');
+          if (mainUi) {
+            mainUi.classList.remove('opacity-0', 'pointer-events-none');
+            mainUi.classList.add('opacity-100');
+          }
         }
       }
 
@@ -1969,16 +1974,24 @@
         shockwaveMesh.scale.set(0.1, 0.1, 1);
       }
 
-      // Hide UI during cinematic intro
+      // Hide UI during cinematic intro & return to no-UI cosmic default
+      isUiVisible = false;
       const mainUi = document.getElementById('main-ui');
       if (mainUi) {
-        mainUi.classList.remove('opacity-100');
+        mainUi.classList.remove('opacity-100', 'pointer-events-auto');
         mainUi.classList.add('opacity-0', 'pointer-events-none');
       }
       const topHud = document.getElementById('top-hud');
       if (topHud) {
-        topHud.classList.remove('opacity-100');
+        topHud.classList.remove('opacity-100', 'pointer-events-auto');
         topHud.classList.add('opacity-0', 'pointer-events-none');
+      }
+      const uiText = document.getElementById('ui-visibility-text');
+      if (uiText) uiText.textContent = 'SHOW UI';
+      const uiBtn = document.getElementById('ui-visibility-toggle');
+      if (uiBtn) {
+        uiBtn.classList.remove('border-starlight/60', 'bg-starlight/20', 'text-white');
+        uiBtn.classList.add('border-starlight/30', 'bg-starlight/10', 'text-starlight');
       }
     }
 
@@ -2256,8 +2269,8 @@
       const q = query.toLowerCase().trim();
       const items = [
         { label: "Replay 3D Sand & Supernova Intro", icon: "rotate-ccw", action: () => { closeCommandPalette(); replayIntroAnimation(); } },
+        { label: "Toggle UI / Observation Mode (Shortcut: U)", icon: "layout", action: () => { closeCommandPalette(); toggleUiVisibility(); } },
         { label: "Toggle Ambient Drift Audio", icon: "volume-2", action: () => document.getElementById('audio-toggle').click() },
-        { label: "Toggle Observation Mode", icon: "eye", action: () => toggleObservationMode() },
         { label: "Broadcast New Signal", icon: "satellite", action: () => { closeCommandPalette(); openModal('transmit-modal'); } },
         { label: "Read Astra Manifesto", icon: "book-open", action: () => { closeCommandPalette(); openModal('manifesto-modal'); } },
         ...MCP_PROBES.map(p => ({
@@ -2288,16 +2301,49 @@
       });
     }
 
+    // Toggle UI Visibility (Pure cosmic nebula view by default, reveals UI on press)
+    function toggleUiVisibility(forceState) {
+      if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
+      if (typeof forceState === 'boolean') {
+        isUiVisible = forceState;
+      } else {
+        isUiVisible = !isUiVisible;
+      }
+
+      const mainUi = document.getElementById('main-ui');
+      const uiBtn = document.getElementById('ui-visibility-toggle');
+      const uiText = document.getElementById('ui-visibility-text');
+
+      if (mainUi) {
+        if (isUiVisible) {
+          mainUi.classList.remove('opacity-0', 'pointer-events-none');
+          mainUi.classList.add('opacity-100', 'pointer-events-auto');
+        } else {
+          mainUi.classList.remove('opacity-100', 'pointer-events-auto');
+          mainUi.classList.add('opacity-0', 'pointer-events-none');
+        }
+      }
+
+      if (uiText) {
+        uiText.textContent = isUiVisible ? 'HIDE UI' : 'SHOW UI';
+      }
+
+      if (uiBtn) {
+        if (isUiVisible) {
+          uiBtn.classList.add('border-starlight/60', 'bg-starlight/20', 'text-white');
+          uiBtn.classList.remove('border-starlight/30', 'bg-starlight/10', 'text-starlight');
+        } else {
+          uiBtn.classList.remove('border-starlight/60', 'bg-starlight/20', 'text-white');
+          uiBtn.classList.add('border-starlight/30', 'bg-starlight/10', 'text-starlight');
+        }
+      }
+
+      showToast(isUiVisible ? "// UI DIRECTORY & TYPOGRAPHY REVEALED" : "// OBSERVATION MODE: COSMIC VOID");
+    }
+
     // Observation Mode (Pure Cosmic Background Mode)
     function toggleObservationMode() {
-      cosmicAudio.playClickChime();
-      document.body.classList.toggle('observation-mode');
-      const isObs = document.body.classList.contains('observation-mode');
-      const text = document.getElementById('observation-text');
-      if (text) {
-        text.textContent = isObs ? 'EXIT VOID' : 'OBSERVE VOID';
-      }
-      showToast(isObs ? "// OBSERVATION MODE ENGAGED" : "// UI TELEMETRY RESTORED");
+      toggleUiVisibility();
     }
 
     // Broadcast Form Handler
@@ -2398,20 +2444,8 @@
 
       // 5. UI Visibility Toggle (Show / Hide text blocks and directory)
       const uiVisibilityBtn = document.getElementById('ui-visibility-toggle');
-      const uiVisibilityText = document.getElementById('ui-visibility-text');
-      const mainUi = document.getElementById('main-ui');
-
-      function toggleUiVisibility() {
-        cosmicAudio.playClickChime();
-        const isHidden = mainUi.classList.toggle('hidden');
-        if (uiVisibilityText) {
-          uiVisibilityText.textContent = isHidden ? 'Show UI' : 'Hide UI';
-        }
-        showToast(isHidden ? "// TEXT BLOCKS HIDDEN (BACKGROUND FOCUS)" : "// UI DIRECTORY RESTORED");
-      }
-
       if (uiVisibilityBtn) {
-        uiVisibilityBtn.addEventListener('click', toggleUiVisibility);
+        uiVisibilityBtn.addEventListener('click', () => toggleUiVisibility());
       }
 
       // 6. Transmit Signal Button
