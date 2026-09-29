@@ -269,9 +269,9 @@
     <!-- Nebula Rotation Direction Toggle Button -->
     <button id="rot-direction-toggle" 
             class="group flex items-center gap-2 px-3.5 py-2 rounded-full glass-card hover:border-starlight/40 text-xs font-mono text-slate-300 hover:text-starlight transition-all duration-300 shadow-xl"
-            title="Toggle Nebula Drift Direction: Left-to-Right vs Right-to-Left (Shortcut: D)">
+            title="Toggle Nebula Spin Direction: Clockwise vs Anticlockwise (Shortcut: D)">
       <i data-lucide="compass" class="w-3.5 h-3.5 text-twilight group-hover:text-starlight transition-transform group-hover:rotate-45 duration-300"></i>
-      <span id="rot-direction-text" class="text-[11px] uppercase tracking-wider font-semibold text-starlight">DIR: L ➔ R</span>
+      <span id="rot-direction-text" class="text-[11px] uppercase tracking-wider font-semibold text-starlight">SPIN: CLOCKWISE</span>
       <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 group-hover:text-starlight">D</span>
     </button>
 
@@ -1886,8 +1886,8 @@
         const posAttr = galaxyMesh.geometry.attributes.position;
         const posArr = posAttr.array;
 
-        // Spiral rotation unwinds harmoniously in the active rotation direction
-        const unwindAngle = (1.0 - ease) * 1.35 * rotSpeedDirection;
+        // Spiral rotation unwinds harmoniously in the EXACT same clockwise direction as Phase 4
+        const unwindAngle = -(1.0 - ease) * 1.35 * rotSpeedDirection;
 
         for (let i = 0; i < starCount; i++) {
           const i3 = i * 3;
@@ -2420,7 +2420,7 @@
       const items = [
         { label: "Replay 3D Sand & Supernova Intro", icon: "rotate-ccw", action: () => { closeCommandPalette(); replayIntroAnimation(); } },
         { label: "Toggle UI / Observation Mode (Shortcut: U)", icon: "layout", action: () => { closeCommandPalette(); toggleUiVisibility(); } },
-        { label: "Toggle Nebula Drift Direction (Shortcut: D)", icon: "compass", action: () => { closeCommandPalette(); toggleRotationDirection(); } },
+        { label: "Toggle Nebula Spin Direction: Clockwise / Anticlockwise (Shortcut: D)", icon: "compass", action: () => { closeCommandPalette(); toggleRotationDirection(); } },
         { label: "Toggle Ambient Drift Audio", icon: "volume-2", action: () => document.getElementById('audio-toggle').click() },
         { label: "Broadcast New Signal", icon: "satellite", action: () => { closeCommandPalette(); openModal('transmit-modal'); } },
         { label: "Read Astra Manifesto", icon: "book-open", action: () => { closeCommandPalette(); openModal('manifesto-modal'); } },
@@ -2497,7 +2497,7 @@
       toggleUiVisibility();
     }
 
-    // Toggle Nebula Drift Direction: Left-to-Right (rotSpeedDirection = 1) vs Right-to-Left (rotSpeedDirection = -1)
+    // Toggle Nebula Spin Direction: Clockwise (rotSpeedDirection = 1) vs Anticlockwise (rotSpeedDirection = -1)
     function toggleRotationDirection(forceDir) {
       if (typeof forceDir === 'number') {
         rotSpeedDirection = forceDir;
@@ -2505,10 +2505,10 @@
         rotSpeedDirection = -rotSpeedDirection;
       }
       if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
-      const isLtoR = rotSpeedDirection > 0;
+      const isCw = rotSpeedDirection > 0;
       const text = document.getElementById('rot-direction-text');
-      if (text) text.textContent = isLtoR ? 'DIR: L ➔ R' : 'DIR: R ➔ L';
-      showToast(isLtoR ? "// NEBULA DRIFT: LEFT TO RIGHT (L ➔ R)" : "// NEBULA DRIFT: RIGHT TO LEFT (R ➔ L)");
+      if (text) text.textContent = isCw ? 'SPIN: CLOCKWISE' : 'SPIN: ANTICLOCKWISE';
+      showToast(isCw ? "// NEBULA MOTION: CLOCKWISE (SYNCHRONIZED)" : "// NEBULA MOTION: ANTICLOCKWISE (SYNCHRONIZED)");
     }
 
     // Broadcast Form Handler
