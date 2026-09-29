@@ -1166,50 +1166,169 @@
     const raycaster = new THREE.Raycaster();
     const galaxyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
-    // Creates an authentic 3D microscopic mineral sand grain (irregular faceted quartz crystal)
+    // Generates high-resolution procedural mineral micro-textures for the 3D sand grain
+    function generateSandTextures() {
+      const size = 512;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Gritty quartz stone base gradient
+      const baseGrad = ctx.createLinearGradient(0, 0, size, size);
+      baseGrad.addColorStop(0, '#E8D5B5');
+      baseGrad.addColorStop(0.3, '#D9BC93');
+      baseGrad.addColorStop(0.65, '#C6A275');
+      baseGrad.addColorStop(1, '#A98154');
+      ctx.fillStyle = baseGrad;
+      ctx.fillRect(0, 0, size, size);
+
+      const imgData = ctx.getImageData(0, 0, size, size);
+      const data = imgData.data;
+
+      const bumpCanvas = document.createElement('canvas');
+      bumpCanvas.width = size;
+      bumpCanvas.height = size;
+      const bctx = bumpCanvas.getContext('2d');
+      const bumpData = bctx.createImageData(size, size);
+      const bdata = bumpData.data;
+
+      const roughCanvas = document.createElement('canvas');
+      roughCanvas.width = size;
+      roughCanvas.height = size;
+      const rctx = roughCanvas.getContext('2d');
+      const roughData = rctx.createImageData(size, size);
+      const rdata = roughData.data;
+
+      // Multi-layer procedural mineral noise synthesis
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const idx = (y * size + x) * 4;
+
+          // Multiple harmonic frequencies for crystalline fracture lines & sandy grit
+          const n1 = (Math.sin(x * 0.28) * Math.cos(y * 0.28) + 1.0) * 0.5;
+          const n2 = (Math.sin(x * 0.08 + y * 0.14) * Math.cos(x * 0.16 - y * 0.09) + 1.0) * 0.5;
+          const n3 = (Math.sin(x * 0.9 + y * 0.85) * Math.sin(x * 1.4 - y * 0.7) + 1.0) * 0.5;
+          const whiteNoise = Math.random();
+
+          // Gritty height value [0..255]
+          const height = Math.floor((n1 * 0.35 + n2 * 0.30 + n3 * 0.15 + whiteNoise * 0.20) * 255);
+
+          // Specular mica glints & dark pyroxene / iron micro-speckles
+          const isMicaGlint = whiteNoise > 0.978;
+          const isDarkMineral = whiteNoise < 0.042;
+
+          let r = data[idx + 0];
+          let g = data[idx + 1];
+          let b = data[idx + 2];
+
+          if (isMicaGlint) {
+            // Bright reflective quartz/mica crystalline inclusion
+            r = 255; g = 252; b = 240;
+          } else if (isDarkMineral) {
+            // Dark iron/volcanic mineral intrusion
+            r = Math.floor(r * 0.38);
+            g = Math.floor(g * 0.33);
+            b = Math.floor(b * 0.28);
+          } else {
+            // Chipped surface shading based on height relief
+            const relief = (height - 128) * 0.42;
+            r = Math.min(255, Math.max(0, r + relief));
+            g = Math.min(255, Math.max(0, g + relief * 0.92));
+            b = Math.min(255, Math.max(0, b + relief * 0.78));
+          }
+
+          data[idx + 0] = r;
+          data[idx + 1] = g;
+          data[idx + 2] = b;
+          data[idx + 3] = 255;
+
+          // Strong high-contrast bump map
+          bdata[idx + 0] = height;
+          bdata[idx + 1] = height;
+          bdata[idx + 2] = height;
+          bdata[idx + 3] = 255;
+
+          // Roughness map (mica glints are glassy smooth, crevices are coarse)
+          const roughVal = isMicaGlint ? 30 : Math.min(255, Math.max(80, Math.floor(230 - height * 0.65)));
+          rdata[idx + 0] = roughVal;
+          rdata[idx + 1] = roughVal;
+          rdata[idx + 2] = roughVal;
+          rdata[idx + 3] = 255;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      bctx.putImageData(bumpData, 0, 0);
+      rctx.putImageData(roughData, 0, 0);
+
+      const diffuseMap = new THREE.CanvasTexture(canvas);
+      const bumpMap = new THREE.CanvasTexture(bumpCanvas);
+      const roughnessMap = new THREE.CanvasTexture(roughCanvas);
+
+      diffuseMap.wrapS = diffuseMap.wrapT = THREE.RepeatWrapping;
+      bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
+      roughnessMap.wrapS = roughnessMap.wrapT = THREE.RepeatWrapping;
+
+      diffuseMap.repeat.set(3, 3);
+      bumpMap.repeat.set(3, 3);
+      roughnessMap.repeat.set(3, 3);
+
+      return { diffuseMap, bumpMap, roughnessMap };
+    }
+
+    // Creates an authentic 3D microscopic mineral sand grain (chipped quartz with strong tactile grit)
     function create3DSandGrain() {
       const group = new THREE.Group();
 
-      // 1. Faceted crystalline mineral rock geometry with organic vertex displacement
-      const geo = new THREE.DodecahedronGeometry(0.85, 1);
+      // 1. Organic irregular mineral rock geometry with multi-octave fractal displacement
+      const geo = new THREE.DodecahedronGeometry(1.35, 2);
       const pos = geo.attributes.position;
-      // Procedurally perturb vertices to create authentic mineral facets & irregular contours
       for (let i = 0; i < pos.count; i++) {
         const vx = pos.getX(i);
         const vy = pos.getY(i);
         const vz = pos.getZ(i);
         const len = Math.hypot(vx, vy, vz);
-        // Microscopic mineral noise displacement
-        const noise = 1.0 + (Math.sin(vx * 7.0 + vy * 5.0) * 0.18 + Math.cos(vz * 6.0) * 0.12);
-        pos.setXYZ(i, (vx / len) * 0.85 * noise, (vy / len) * 0.85 * noise, (vz / len) * 0.85 * noise);
+
+        // 3-tier fractal noise: macro asymmetry + cleavage planes + micro grit
+        const f1 = Math.sin(vx * 3.5 + vy * 2.8) * Math.cos(vz * 3.2);
+        const f2 = Math.cos(vx * 7.8 - vz * 6.5) * Math.sin(vy * 7.1);
+        const f3 = Math.sin(vx * 15.0 + vy * 13.0 + vz * 14.0) * 0.5 + 0.5;
+
+        const noise = 1.0 + f1 * 0.18 + f2 * 0.10 + (f3 - 0.5) * 0.08;
+        pos.setXYZ(i, (vx / len) * 1.35 * noise, (vy / len) * 1.35 * noise, (vz / len) * 1.35 * noise);
       }
       geo.computeVertexNormals();
 
-      // Physical mineral material with sharp specular crystal facets & flat shading
+      // 2. High-tactile physical material with procedural bump & roughness maps
+      const textures = generateSandTextures();
       const mat = new THREE.MeshStandardMaterial({
-        color: 0xEAD7BD,       // Warm silica quartz
-        roughness: 0.28,       // Glassy mineral sheen
-        metalness: 0.12,
-        flatShading: true,      // Crisply defined crystalline facets catching light
-        emissive: 0x3D2E1A,     // Subtle warm internal starlight glow
-        emissiveIntensity: 0.65
+        map: textures.diffuseMap,
+        bumpMap: textures.bumpMap,
+        bumpScale: 0.22,           // Distinct tactile gritty surface relief
+        roughnessMap: textures.roughnessMap,
+        roughness: 0.62,
+        metalness: 0.18,           // Crystalline specular gleam on facets
+        flatShading: true,         // Crisp crystalline facets catching directional light
+        emissive: 0x382816,        // Warm internal core glow
+        emissiveIntensity: 0.45
       });
       sandGrainMesh = new THREE.Mesh(geo, mat);
       group.add(sandGrainMesh);
 
-      // 2. Internal Starlight Core Light (illuminates the grain's facets and surrounding space)
+      // 3. Internal Starlight Core Light (illuminates the grain from within)
       grainInternalLight = new THREE.PointLight(0xFFE8D1, 3.2, 14.0);
       group.add(grainInternalLight);
 
-      // 3. Faint starlight corona aura surrounding the grain
+      // 4. Subtle starlight corona aura surrounding the grain
       const haloCanvas = document.createElement('canvas');
       haloCanvas.width = 128;
       haloCanvas.height = 128;
       const hctx = haloCanvas.getContext('2d');
       const hgrad = hctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-      hgrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-      hgrad.addColorStop(0.25, 'rgba(255, 235, 200, 0.65)');
-      hgrad.addColorStop(0.60, 'rgba(234, 180, 110, 0.18)');
+      hgrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      hgrad.addColorStop(0.2, 'rgba(255, 235, 200, 0.5)');
+      hgrad.addColorStop(0.55, 'rgba(234, 180, 110, 0.12)');
       hgrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       hctx.fillStyle = hgrad;
       hctx.fillRect(0, 0, 128, 128);
@@ -1218,12 +1337,12 @@
       const haloMat = new THREE.SpriteMaterial({
         map: haloTex,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.55,
         blending: THREE.AdditiveBlending,
         depthWrite: false
       });
       const haloSprite = new THREE.Sprite(haloMat);
-      haloSprite.scale.set(3.4, 3.4, 1);
+      haloSprite.scale.set(2.4, 2.4, 1);
       group.add(haloSprite);
 
       // Initial placement high in the top-left sky
@@ -1258,9 +1377,14 @@
       const ambientLight = new THREE.AmbientLight(0x222638, 1.5);
       scene.add(ambientLight);
 
-      const celestialKeyLight = new THREE.DirectionalLight(0xFFEADB, 2.5);
+      const celestialKeyLight = new THREE.DirectionalLight(0xFFEADB, 2.8);
       celestialKeyLight.position.set(12.0, 20.0, 15.0);
       scene.add(celestialKeyLight);
+
+      // Cool rim light for sharp grazing highlights on mineral facets
+      const celestialRimLight = new THREE.DirectionalLight(0x70A0FF, 2.2);
+      celestialRimLight.position.set(-15.0, -12.0, 8.0);
+      scene.add(celestialRimLight);
 
       // 3. COLOR PALETTE FOR 12,500 STARS (Reds, Purples, Blues, Oranges & Core White)
       const colorPalette = {
