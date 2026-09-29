@@ -266,14 +266,6 @@
       <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 group-hover:text-starlight">C</span>
     </button>
 
-    <!-- Nebula Rotation Direction Toggle Button -->
-    <button id="rot-direction-toggle" 
-            class="group flex items-center gap-2 px-3.5 py-2 rounded-full glass-card hover:border-starlight/40 text-xs font-mono text-slate-300 hover:text-starlight transition-all duration-300 shadow-xl"
-            title="Toggle Nebula Spin Direction: Clockwise vs Anticlockwise (Shortcut: D)">
-      <i data-lucide="compass" class="w-3.5 h-3.5 text-twilight group-hover:text-starlight transition-transform group-hover:rotate-45 duration-300"></i>
-      <span id="rot-direction-text" class="text-[11px] uppercase tracking-wider font-semibold text-starlight">SPIN: CLOCKWISE</span>
-      <span class="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 group-hover:text-starlight">D</span>
-    </button>
 
     <!-- Alternate Index: NGC 6302 Butterfly Nebula Sky -->
     <a href="nebula.html" 
@@ -1150,7 +1142,7 @@
     // ----------------------------------------------------
     let scene, camera, renderer;
     let galaxyMesh, galaxyCoreMesh, starfieldMesh;
-    let positions, homePositions, velocities, colors, sizes, twinkles;
+    let positions, homePositions, velocities, fluidOffsets, colors, sizes, twinkles;
     let homeRadii, homeAngles, homeZ;
     let burstTurbulence;
     let starCount = 12500;
@@ -1165,7 +1157,7 @@
     let hasExploded = false;
     let introComplete = false;
     let isUiVisible = false;
-    let rotSpeedDirection = 1.0; // 1.0 = Left to Right (default), -1.0 = Right to Left
+    const rotSpeed = -0.0022; // Synchronized constant anticlockwise galactic spin (preloaded)
 
     // Fluid cursor tracking in 3D galaxy plane
     const mouse2D = new THREE.Vector2(0, 0);
@@ -1450,6 +1442,7 @@
       positions = new Float32Array(starCount * 3);
       homePositions = new Float32Array(starCount * 3);
       velocities = new Float32Array(starCount * 3);
+      fluidOffsets = new Float32Array(starCount * 3);
       colors = new Float32Array(starCount * 3);
       sizes = new Float32Array(starCount);
       twinkles = new Float32Array(starCount);
@@ -1886,16 +1879,16 @@
         const posAttr = galaxyMesh.geometry.attributes.position;
         const posArr = posAttr.array;
 
-        // Spiral rotation unwinds harmoniously in the EXACT same clockwise direction as Phase 4
-        const unwindAngle = -(1.0 - ease) * 1.35 * rotSpeedDirection;
+        // Preloaded continuous spin active from frame 1 of detonation + explosive uncurling
+        const unwindAngle = (1.0 - ease) * 1.35;
+        const turbDecay = (1.0 - ease) * 2.5;
 
         for (let i = 0; i < starCount; i++) {
+          homeAngles[i] += rotSpeed; // Continuous spin preloaded and active from the moment it unravels!
           const i3 = i * 3;
           const r = homeRadii[i] * ease;
           const theta = homeAngles[i] + unwindAngle;
 
-          // Outward blast position + decaying turbulence
-          const turbDecay = (1.0 - ease) * 2.5;
           const px = Math.cos(theta) * r + burstTurbulence[i3 + 0] * turbDecay;
           const py = Math.sin(theta) * r + burstTurbulence[i3 + 1] * turbDecay;
           const pz = homeZ[i] * ease + burstTurbulence[i3 + 2] * turbDecay;
@@ -1941,6 +1934,7 @@
         introComplete = true;
         for (let i = 0; i < starCount * 3; i++) {
           velocities[i] = 0;
+          fluidOffsets[i] = 0;
         }
 
         const topHud = document.getElementById('top-hud');
@@ -1979,13 +1973,11 @@
       const cursorSpeed = Math.hypot(cursorVx, cursorVy);
       if (isMouseActive) prevCursor3D.copy(cursor3D);
 
-      // 2. Laminar Fluid Physics (Stick through still water)
+      // 2. Laminar Fluid Physics & Seamless Constant Galactic Spin
       const radius = 3.4;
       const radiusSq = radius * radius;
       const posAttr = galaxyMesh.geometry.attributes.position;
       const posArr = posAttr.array;
-      // Stellar stream rotation (positive rotSpeedDirection flows Left to Right)
-      const rotSpeed = 0.0022 * rotSpeedDirection;
 
       const stickDirX = cursorSpeed > 0.0001 ? cursorVx / cursorSpeed : 0;
       const stickDirY = cursorSpeed > 0.0001 ? cursorVy / cursorSpeed : 0;
@@ -1994,9 +1986,13 @@
 
       for (let i = 0; i < starCount; i++) {
         const i3 = i * 3;
-        let px = posArr[i3];
-        let py = posArr[i3 + 1];
-        let pz = posArr[i3 + 2];
+        homeAngles[i] += rotSpeed; // Constant steady spin continues with zero lag!
+        const hx = homeRadii[i] * Math.cos(homeAngles[i]);
+        const hy = homeRadii[i] * Math.sin(homeAngles[i]);
+        const hz = homeZ[i];
+
+        let px = hx + fluidOffsets[i3 + 0];
+        let py = hy + fluidOffsets[i3 + 1];
 
         const dx = px - cursor3D.x;
         const dy = py - cursor3D.y;
@@ -2020,29 +2016,18 @@
           }
         }
 
-        homeAngles[i] += rotSpeed;
-        const hx = homeRadii[i] * Math.cos(homeAngles[i]);
-        const hy = homeRadii[i] * Math.sin(homeAngles[i]);
-        const hz = homeZ[i];
+        // Fluid displacement restoring spring & damping
+        velocities[i3 + 0] = (velocities[i3 + 0] - fluidOffsets[i3 + 0] * 0.06) * 0.88;
+        velocities[i3 + 1] = (velocities[i3 + 1] - fluidOffsets[i3 + 1] * 0.06) * 0.88;
+        velocities[i3 + 2] = (velocities[i3 + 2] - fluidOffsets[i3 + 2] * 0.06) * 0.88;
 
-        const springX = (hx - px) * 0.010;
-        const springY = (hy - py) * 0.010;
-        const springZ = (hz - pz) * 0.010;
+        fluidOffsets[i3 + 0] += velocities[i3 + 0];
+        fluidOffsets[i3 + 1] += velocities[i3 + 1];
+        fluidOffsets[i3 + 2] += velocities[i3 + 2];
 
-        velocities[i3 + 0] = (velocities[i3 + 0] + springX) * 0.915;
-        velocities[i3 + 1] = (velocities[i3 + 1] + springY) * 0.915;
-        velocities[i3 + 2] = (velocities[i3 + 2] + springZ) * 0.915;
-
-        const vSpeed = Math.hypot(velocities[i3 + 0], velocities[i3 + 1]);
-        if (vSpeed > 0.12) {
-          const scale = 0.12 / vSpeed;
-          velocities[i3 + 0] *= scale;
-          velocities[i3 + 1] *= scale;
-        }
-
-        posArr[i3 + 0] += velocities[i3 + 0];
-        posArr[i3 + 1] += velocities[i3 + 1];
-        posArr[i3 + 2] += velocities[i3 + 2];
+        posArr[i3 + 0] = hx + fluidOffsets[i3 + 0];
+        posArr[i3 + 1] = hy + fluidOffsets[i3 + 1];
+        posArr[i3 + 2] = hz + fluidOffsets[i3 + 2];
       }
 
       posAttr.needsUpdate = true;
@@ -2108,6 +2093,7 @@
         for (let i = 0; i < starCount * 3; i++) {
           posArr[i] = 0;
           velocities[i] = 0;
+          fluidOffsets[i] = 0;
         }
         posAttr.needsUpdate = true;
       }
@@ -2420,7 +2406,7 @@
       const items = [
         { label: "Replay 3D Sand & Supernova Intro", icon: "rotate-ccw", action: () => { closeCommandPalette(); replayIntroAnimation(); } },
         { label: "Toggle UI / Observation Mode (Shortcut: U)", icon: "layout", action: () => { closeCommandPalette(); toggleUiVisibility(); } },
-        { label: "Toggle Nebula Spin Direction: Clockwise / Anticlockwise (Shortcut: D)", icon: "compass", action: () => { closeCommandPalette(); toggleRotationDirection(); } },
+        { label: "Anticlockwise Nebula Drift (Synchronized)", icon: "compass", action: () => { closeCommandPalette(); toggleRotationDirection(); } },
         { label: "Toggle Ambient Drift Audio", icon: "volume-2", action: () => document.getElementById('audio-toggle').click() },
         { label: "Broadcast New Signal", icon: "satellite", action: () => { closeCommandPalette(); openModal('transmit-modal'); } },
         { label: "Read Astra Manifesto", icon: "book-open", action: () => { closeCommandPalette(); openModal('manifesto-modal'); } },
@@ -2497,18 +2483,10 @@
       toggleUiVisibility();
     }
 
-    // Toggle Nebula Spin Direction: Clockwise (rotSpeedDirection = 1) vs Anticlockwise (rotSpeedDirection = -1)
-    function toggleRotationDirection(forceDir) {
-      if (typeof forceDir === 'number') {
-        rotSpeedDirection = forceDir;
-      } else {
-        rotSpeedDirection = -rotSpeedDirection;
-      }
+    // Synchronized Anticlockwise Nebula Drift Status
+    function toggleRotationDirection() {
       if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
-      const isCw = rotSpeedDirection > 0;
-      const text = document.getElementById('rot-direction-text');
-      if (text) text.textContent = isCw ? 'SPIN: CLOCKWISE' : 'SPIN: ANTICLOCKWISE';
-      showToast(isCw ? "// NEBULA MOTION: CLOCKWISE (SYNCHRONIZED)" : "// NEBULA MOTION: ANTICLOCKWISE (SYNCHRONIZED)");
+      showToast("// NEBULA MOTION: SYNCHRONIZED ANTICLOCKWISE DRIFT");
     }
 
     // Broadcast Form Handler
@@ -2689,12 +2667,6 @@
         replayBtn.addEventListener('click', replayIntroAnimation);
       }
 
-      // Rotation Direction Toggle Button Listener
-      const rotDirBtn = document.getElementById('rot-direction-toggle');
-      if (rotDirBtn) {
-        rotDirBtn.addEventListener('click', () => toggleRotationDirection());
-      }
-
       // 9. Keyboard Shortcuts
       window.addEventListener('keydown', (e) => {
         // Space or M key toggles audio (when not typing in an input)
@@ -2706,7 +2678,7 @@
         if ((e.key === 'r' || e.key === 'R') && !e.target.matches('input, textarea')) {
           replayIntroAnimation();
         }
-        // D key toggles Nebula drift direction (Left-to-Right vs Right-to-Left)
+        // D key status reminder (Synchronized Anticlockwise)
         if ((e.key === 'd' || e.key === 'D') && !e.target.matches('input, textarea')) {
           toggleRotationDirection();
         }
