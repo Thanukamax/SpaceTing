@@ -1876,8 +1876,8 @@
         const posAttr = galaxyMesh.geometry.attributes.position;
         const posArr = posAttr.array;
 
-        // Spiral rotation unwinds as the explosion expands
-        const unwindAngle = (1.0 - ease) * 1.25;
+        // Spiral rotation unwinds as the explosion expands in opposite direction
+        const unwindAngle = -(1.0 - ease) * 1.25;
 
         for (let i = 0; i < starCount; i++) {
           const i3 = i * 3;
@@ -1974,7 +1974,7 @@
       const radiusSq = radius * radius;
       const posAttr = galaxyMesh.geometry.attributes.position;
       const posArr = posAttr.array;
-      const rotSpeed = 0.0012;
+      const rotSpeed = -0.0012;
 
       const stickDirX = cursorSpeed > 0.0001 ? cursorVx / cursorSpeed : 0;
       const stickDirY = cursorSpeed > 0.0001 ? cursorVy / cursorSpeed : 0;
