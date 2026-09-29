@@ -1158,9 +1158,11 @@
     let isUiVisible = false;
 
     // Fluid cursor tracking in 3D galaxy plane
-    const mouse2D = new THREE.Vector2(-999, -999);
-    const cursor3D = new THREE.Vector3(0, 0, 0);
-    const prevCursor3D = new THREE.Vector3(0, 0, 0);
+    const mouse2D = new THREE.Vector2(0, 0);
+    let isMouseActive = false;
+    let isFirstMouseMove = true;
+    const cursor3D = new THREE.Vector3(9999, 9999, 0);
+    const prevCursor3D = new THREE.Vector3(9999, 9999, 0);
     const raycaster = new THREE.Raycaster();
     const galaxyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
@@ -1618,12 +1620,14 @@
     }
 
     function onMouseMove(e) {
+      isMouseActive = true;
       mouse2D.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse2D.y = -(e.clientY / window.innerHeight) * 2 + 1;
     }
 
     function onTouchMove(e) {
       if (e.touches.length > 0) {
+        isMouseActive = true;
         mouse2D.x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
         mouse2D.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
       }
@@ -1801,18 +1805,9 @@
       // --- PHASE 4: INTERACTIVE FLUID GALAXY (introComplete = true) ---
       if (!introComplete) {
         introComplete = true;
-        const posAttr = galaxyMesh.geometry.attributes.position;
-        const posArr = posAttr.array;
-        for (let i = 0; i < starCount; i++) {
-          const i3 = i * 3;
-          posArr[i3 + 0] = homePositions[i3 + 0];
-          posArr[i3 + 1] = homePositions[i3 + 1];
-          posArr[i3 + 2] = homePositions[i3 + 2];
-          velocities[i3 + 0] = 0;
-          velocities[i3 + 1] = 0;
-          velocities[i3 + 2] = 0;
+        for (let i = 0; i < starCount * 3; i++) {
+          velocities[i] = 0;
         }
-        posAttr.needsUpdate = true;
 
         const topHud = document.getElementById('top-hud');
         if (topHud) {
@@ -1829,18 +1824,26 @@
       }
 
       // 1. Raycast cursor coordinates onto galaxy plane (z = 0)
-      raycaster.setFromCamera(mouse2D, camera);
-      const intersection = new THREE.Vector3();
-      const hasIntersect = raycaster.ray.intersectPlane(galaxyPlane, intersection);
-
-      if (hasIntersect) {
-        cursor3D.copy(intersection);
+      if (isMouseActive) {
+        raycaster.setFromCamera(mouse2D, camera);
+        const intersection = new THREE.Vector3();
+        const hasIntersect = raycaster.ray.intersectPlane(galaxyPlane, intersection);
+        if (hasIntersect) {
+          cursor3D.copy(intersection);
+          if (isFirstMouseMove) {
+            prevCursor3D.copy(cursor3D);
+            isFirstMouseMove = false;
+          }
+        }
+      } else {
+        cursor3D.set(9999, 9999, 0);
+        prevCursor3D.set(9999, 9999, 0);
       }
 
-      const cursorVx = cursor3D.x - prevCursor3D.x;
-      const cursorVy = cursor3D.y - prevCursor3D.y;
+      const cursorVx = isMouseActive ? cursor3D.x - prevCursor3D.x : 0;
+      const cursorVy = isMouseActive ? cursor3D.y - prevCursor3D.y : 0;
       const cursorSpeed = Math.hypot(cursorVx, cursorVy);
-      prevCursor3D.copy(cursor3D);
+      if (isMouseActive) prevCursor3D.copy(cursor3D);
 
       // 2. Laminar Fluid Physics (Stick through still water)
       const radius = 3.4;
@@ -1913,9 +1916,17 @@
         galaxyMesh.material.uniforms.uTime.value = elapsedTime;
       }
 
-      // Smooth camera micro-drift
-      camera.position.x += (mouse2D.x * 2.2 - camera.position.x) * 0.03;
-      camera.position.y += (mouse2D.y * 1.6 - camera.position.y) * 0.03;
+      // Smooth camera micro-drift (strictly clamped, safe)
+      if (isMouseActive) {
+        const targetCamX = THREE.MathUtils.clamp(mouse2D.x * 2.2, -2.5, 2.5);
+        const targetCamY = THREE.MathUtils.clamp(mouse2D.y * 1.6, -2.0, 2.0);
+        camera.position.x += (targetCamX - camera.position.x) * 0.03;
+        camera.position.y += (targetCamY - camera.position.y) * 0.03;
+      } else {
+        camera.position.x += (0.0 - camera.position.x) * 0.03;
+        camera.position.y += (0.0 - camera.position.y) * 0.03;
+      }
+      camera.position.z = 44.0;
       camera.lookAt(0, 0, 0);
 
       // Core pulse
@@ -1932,6 +1943,10 @@
       introStartTime = clock.getElapsedTime();
       hasExploded = false;
       introComplete = false;
+      isMouseActive = false;
+      isFirstMouseMove = true;
+      cursor3D.set(9999, 9999, 0);
+      prevCursor3D.set(9999, 9999, 0);
 
       // Reset camera to initial low angle looking up at top-left
       camera.position.set(8.0, -18.0, 26.0);
