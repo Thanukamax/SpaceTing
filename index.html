@@ -1159,6 +1159,13 @@
     let isUiVisible = false;
     const rotSpeed = -0.0022; // Synchronized constant anticlockwise galactic spin (preloaded)
 
+    // Apple-Font "NOVA" Constellation Morph Targets & Scroll State
+    let novaTargets = null;
+    let starDelays = null;
+    let targetMorph = 0.0;
+    let morphProgress = 0.0;
+    let wheelScrollAccumulator = 0.0;
+
     // Fluid cursor tracking in 3D galaxy plane
     const mouse2D = new THREE.Vector2(0, 0);
     let isMouseActive = false;
@@ -1167,6 +1174,91 @@
     const prevCursor3D = new THREE.Vector3(9999, 9999, 0);
     const raycaster = new THREE.Raycaster();
     const galaxyPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+
+    // Generates 3D coordinates forming the word "NOVA" in Apple system typography (SF Pro Display)
+    function generateNovaTargets(count) {
+      const canvas = document.createElement('canvas');
+      const W = 1600;
+      const H = 600;
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, W, H);
+
+      // Heavy, elegant Apple system typography (SF Pro Display / SF Pro / Helvetica Neue)
+      ctx.font = '900 250px -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Helvetica Neue", Inter, Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      try {
+        ctx.letterSpacing = '18px';
+      } catch (e) {}
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText('NOVA', W / 2, H / 2);
+
+      const imgData = ctx.getImageData(0, 0, W, H);
+      const data = imgData.data;
+
+      const candidates = [];
+      let minX = W, maxX = 0, minY = H, maxY = 0;
+
+      for (let y = 0; y < H; y += 2) {
+        for (let x = 0; x < W; x += 2) {
+          const idx = (y * W + x) * 4;
+          const brightness = data[idx]; // Red channel
+          if (brightness > 45) {
+            candidates.push({ x, y, b: brightness / 255.0 });
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      const targets = new Float32Array(count * 3);
+      if (candidates.length === 0) {
+        for (let i = 0; i < count * 3; i++) targets[i] = 0;
+        return targets;
+      }
+
+      const textWidth = Math.max(maxX - minX, 1);
+      const centerX = (minX + maxX) / 2.0;
+      const centerY = (minY + maxY) / 2.0;
+      const targetWidth3D = 32.0;
+      const scale = targetWidth3D / textWidth;
+
+      // 88% of stars form the razor-sharp letters
+      const textStars = Math.floor(count * 0.88);
+      const step = candidates.length / textStars;
+
+      for (let i = 0; i < textStars; i++) {
+        const idx = Math.floor(i * step) % candidates.length;
+        const pt = candidates[idx];
+
+        // Micro-jitter gives letters crystalline star-density volume
+        const jx = (Math.random() - 0.5) * 0.24;
+        const jy = (Math.random() - 0.5) * 0.24;
+        const jz = (Math.random() - 0.5) * 1.4;
+
+        targets[i * 3 + 0] = (pt.x - centerX) * scale + jx;
+        targets[i * 3 + 1] = -(pt.y - centerY) * scale + jy;
+        targets[i * 3 + 2] = jz;
+      }
+
+      // Remaining 12% form a diffuse ethereal constellation halo around NOVA
+      for (let i = textStars; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const rad = 3.5 + Math.pow(Math.random(), 1.5) * 22.0;
+        targets[i * 3 + 0] = Math.cos(angle) * rad * 1.15;
+        targets[i * 3 + 1] = Math.sin(angle) * rad * 0.45;
+        targets[i * 3 + 2] = (Math.random() - 0.5) * 3.5;
+      }
+
+      return targets;
+    }
 
     // Generates high-resolution procedural mineral micro-textures for the 3D sand grain
     function generateSandTextures() {
@@ -1450,6 +1542,13 @@
       homeAngles = new Float32Array(starCount);
       homeZ = new Float32Array(starCount);
       burstTurbulence = new Float32Array(starCount * 3);
+
+      // Generate Apple-font NOVA constellation targets and organic staggered delays
+      novaTargets = generateNovaTargets(starCount);
+      starDelays = new Float32Array(starCount);
+      for (let i = 0; i < starCount; i++) {
+        starDelays[i] = Math.random();
+      }
 
       const arms = 2;
       const coreCount = 850;
@@ -1979,10 +2078,15 @@
       const posAttr = galaxyMesh.geometry.attributes.position;
       const posArr = posAttr.array;
 
+      // Smoothly ease morphProgress toward targetMorph (0.0 = spiral galaxy, 1.0 = assembled NOVA)
+      morphProgress += (targetMorph - morphProgress) * 0.065;
+
       const stickDirX = cursorSpeed > 0.0001 ? cursorVx / cursorSpeed : 0;
       const stickDirY = cursorSpeed > 0.0001 ? cursorVy / cursorSpeed : 0;
       const perpX = -stickDirY;
       const perpY = stickDirX;
+
+      const isMorphing = morphProgress > 0.0005 && novaTargets;
 
       for (let i = 0; i < starCount; i++) {
         const i3 = i * 3;
@@ -1991,8 +2095,31 @@
         const hy = homeRadii[i] * Math.sin(homeAngles[i]);
         const hz = homeZ[i];
 
-        let px = hx + fluidOffsets[i3 + 0];
-        let py = hy + fluidOffsets[i3 + 1];
+        let finalX = hx;
+        let finalY = hy;
+        let finalZ = hz;
+
+        if (isMorphing) {
+          const delay = starDelays[i];
+          const rawP = THREE.MathUtils.clamp((morphProgress - delay * 0.35) / 0.65, 0.0, 1.0);
+          const p = rawP * rawP * (3.0 - 2.0 * rawP);
+
+          const nx = novaTargets[i3 + 0];
+          const ny = novaTargets[i3 + 1];
+          const nz = novaTargets[i3 + 2];
+
+          // Graceful celestial inward swirl arc
+          const swirlArc = p * (1.0 - p) * 1.5;
+          const swirlX = -hy * swirlArc * 0.20;
+          const swirlY = hx * swirlArc * 0.20;
+
+          finalX = THREE.MathUtils.lerp(hx, nx, p) + swirlX;
+          finalY = THREE.MathUtils.lerp(hy, ny, p) + swirlY;
+          finalZ = THREE.MathUtils.lerp(hz, nz, p);
+        }
+
+        let px = finalX + fluidOffsets[i3 + 0];
+        let py = finalY + fluidOffsets[i3 + 1];
 
         const dx = px - cursor3D.x;
         const dy = py - cursor3D.y;
@@ -2025,9 +2152,9 @@
         fluidOffsets[i3 + 1] += velocities[i3 + 1];
         fluidOffsets[i3 + 2] += velocities[i3 + 2];
 
-        posArr[i3 + 0] = hx + fluidOffsets[i3 + 0];
-        posArr[i3 + 1] = hy + fluidOffsets[i3 + 1];
-        posArr[i3 + 2] = hz + fluidOffsets[i3 + 2];
+        posArr[i3 + 0] = finalX + fluidOffsets[i3 + 0];
+        posArr[i3 + 1] = finalY + fluidOffsets[i3 + 1];
+        posArr[i3 + 2] = finalZ + fluidOffsets[i3 + 2];
       }
 
       posAttr.needsUpdate = true;
@@ -2049,10 +2176,12 @@
       camera.position.z = 44.0;
       camera.lookAt(0, 0, 0);
 
-      // Core pulse
+      // Core pulse - softens and dims when NOVA is assembled so letters stand out brilliantly
       if (galaxyCoreMesh) {
         const pulse = 1.0 + 0.08 * Math.sin(elapsedTime * 2.5);
-        galaxyCoreMesh.scale.set(4.8 * pulse, 4.8 * pulse, 1);
+        const coreScale = 4.8 * pulse * (1.0 - morphProgress * 0.65);
+        galaxyCoreMesh.scale.set(coreScale, coreScale, 1);
+        galaxyCoreMesh.material.opacity = 0.85 * (1.0 - morphProgress * 0.50);
       }
 
       renderer.render(scene, camera);
@@ -2067,6 +2196,12 @@
       isFirstMouseMove = true;
       cursor3D.set(9999, 9999, 0);
       prevCursor3D.set(9999, 9999, 0);
+
+      // Reset NOVA constellation morph state
+      targetMorph = 0.0;
+      morphProgress = 0.0;
+      wheelScrollAccumulator = 0.0;
+      if (typeof syncConstellationBtn === 'function') syncConstellationBtn();
 
       // Reset camera to initial low angle looking up at top-left
       camera.position.set(8.0, -18.0, 26.0);
@@ -2406,6 +2541,7 @@
       const items = [
         { label: "Replay 3D Sand & Supernova Intro", icon: "rotate-ccw", action: () => { closeCommandPalette(); replayIntroAnimation(); } },
         { label: "Toggle UI / Observation Mode (Shortcut: U)", icon: "layout", action: () => { closeCommandPalette(); toggleUiVisibility(); } },
+        { label: "Morph Stars to NOVA (Apple Typography) / Galaxy (Shortcut: C)", icon: "sparkles", action: () => { closeCommandPalette(); toggleConstellation(); } },
         { label: "Anticlockwise Nebula Drift (Synchronized)", icon: "compass", action: () => { closeCommandPalette(); toggleRotationDirection(); } },
         { label: "Toggle Ambient Drift Audio", icon: "volume-2", action: () => document.getElementById('audio-toggle').click() },
         { label: "Broadcast New Signal", icon: "satellite", action: () => { closeCommandPalette(); openModal('transmit-modal'); } },
@@ -2633,30 +2769,76 @@
         });
       });
 
-      // 8b. Constellation NOVA Toggle
-      const constellationBtn = document.getElementById('constellation-toggle');
-      const constellationText = document.getElementById('constellation-text');
-      let targetMorph = 0.0;
+      // 8b. Scroll & Gesture Driven Apple-Font "NOVA" Morphing Engine
+      function syncConstellationBtn() {
+        const constellationBtn = document.getElementById('constellation-toggle');
+        const constellationText = document.getElementById('constellation-text');
+        const isAssembled = targetMorph > 0.5;
+        if (constellationText) {
+          constellationText.textContent = isAssembled ? 'SPIRAL GALAXY' : 'NOVA LOCK';
+        }
+        if (constellationBtn) {
+          if (isAssembled) {
+            constellationBtn.classList.add('border-starlight/60', 'bg-starlight/20', 'text-white');
+            constellationBtn.classList.remove('border-starlight/40', 'bg-starlight/10', 'text-starlight');
+          } else {
+            constellationBtn.classList.remove('border-starlight/60', 'bg-starlight/20', 'text-white');
+            constellationBtn.classList.add('border-starlight/40', 'bg-starlight/10', 'text-starlight');
+          }
+        }
+      }
+
+      function updateScrollMorph() {
+        if (!introComplete) return;
+        const pageScrollY = window.scrollY || window.pageYOffset || 0;
+        const scrollProgress = THREE.MathUtils.clamp(pageScrollY / 380.0, 0.0, 1.0);
+        targetMorph = THREE.MathUtils.clamp(Math.max(scrollProgress, wheelScrollAccumulator), 0.0, 1.0);
+        syncConstellationBtn();
+      }
+
+      function onWheelScroll(e) {
+        if (!introComplete) return;
+        if (!isUiVisible || window.scrollY <= 15) {
+          wheelScrollAccumulator += e.deltaY * 0.0024;
+          wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
+          updateScrollMorph();
+        }
+      }
+
+      let touchStartY = 0;
+      function onTouchStart(e) {
+        if (e.touches.length > 0) touchStartY = e.touches[0].clientY;
+      }
+      function onTouchMoveScroll(e) {
+        if (!introComplete || e.touches.length === 0) return;
+        if (!isUiVisible || window.scrollY <= 15) {
+          const deltaY = touchStartY - e.touches[0].clientY;
+          wheelScrollAccumulator += deltaY * 0.003;
+          wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
+          touchStartY = e.touches[0].clientY;
+          updateScrollMorph();
+        }
+      }
+
+      window.addEventListener('scroll', updateScrollMorph, { passive: true });
+      window.addEventListener('wheel', onWheelScroll, { passive: true });
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMoveScroll, { passive: true });
 
       function toggleConstellation() {
         cosmicAudio.playClickChime();
-        targetMorph = (targetMorph > 0.5 ? 0.0 : 1.0);
-        const isLocked = targetMorph < 0.5;
-        if (constellationText) {
-          constellationText.textContent = isLocked ? 'NOVA LOCK' : 'SPIRAL GALAXY';
+        if (targetMorph > 0.5) {
+          targetMorph = 0.0;
+          wheelScrollAccumulator = 0.0;
+        } else {
+          targetMorph = 1.0;
+          wheelScrollAccumulator = 1.0;
         }
-        if (constellationBtn) {
-          if (isLocked) {
-            constellationBtn.classList.add('border-starlight/40', 'bg-starlight/10', 'text-starlight');
-            constellationBtn.classList.remove('border-white/10', 'bg-void/40', 'text-slate-400');
-          } else {
-            constellationBtn.classList.remove('border-starlight/40', 'bg-starlight/10', 'text-starlight');
-            constellationBtn.classList.add('border-white/10', 'bg-void/40', 'text-slate-400');
-          }
-        }
-        showToast(isLocked ? "// CONSTELLATION ASSEMBLED: NOVA" : "// STARS DISPERSED INTO SPIRAL GALAXY");
+        syncConstellationBtn();
+        showToast(targetMorph > 0.5 ? "// CONSTELLATION ASSEMBLED: NOVA (APPLE TYPOGRAPHY)" : "// STARS DISPERSED INTO SPIRAL GALAXY");
       }
 
+      const constellationBtn = document.getElementById('constellation-toggle');
       if (constellationBtn) {
         constellationBtn.addEventListener('click', toggleConstellation);
       }
