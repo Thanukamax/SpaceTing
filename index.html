@@ -241,638 +241,38 @@
     <rect width="100%" height="100%" filter="url(#grain)"/>
   </svg>
 
-  <!-- FLOATING MINIMAL HUD (AUDIO, CONSTELLATION & UI TOGGLE) -->
-  <div id="top-hud" class="fixed top-3 right-3 sm:top-6 sm:right-6 z-50 flex items-center gap-1.5 sm:gap-3 max-w-[calc(100vw-1.5rem)] overflow-x-auto no-scrollbar opacity-0 pointer-events-none transition-opacity duration-1000">
-    <!-- Replay Intro Button -->
-    <button id="replay-intro-btn" 
-            class="group flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-full glass-card hover:border-starlight/40 text-xs font-mono text-slate-300 hover:text-starlight transition-all duration-300 shadow-xl flex-shrink-0"
-            title="Replay 3D Sand Grain & Supernova Intro (Shortcut: R)">
-      <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-twilight group-hover:text-starlight transition-transform group-hover:-rotate-90 duration-300"></i>
-      <span class="hidden md:inline text-[11px] uppercase tracking-wider">REPLAY</span>
-      <span class="hidden lg:inline text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 group-hover:text-starlight">R</span>
+  <!-- MAKESHIFT MINIMAL NAV BAR (ONLY VISIBLE ONCE NOVA IS COMPLETED) -->
+  <header id="makeshift-nav" class="fixed top-0 left-0 right-0 z-50 px-6 py-5 sm:px-8 sm:py-6 flex items-center justify-between opacity-0 pointer-events-none transition-all duration-700 ease-out transform -translate-y-2">
+    <!-- Top-Left: 3-Line Hamburger Menu -->
+    <button id="nav-hamburger-btn" 
+            class="group p-3 rounded-full glass-card border border-white/10 hover:border-starlight/50 bg-void-900/60 hover:bg-void-850/80 backdrop-blur-xl text-starlight hover:text-white transition-all duration-300 shadow-2xl active:scale-95 flex items-center justify-center cursor-pointer pointer-events-auto"
+            aria-label="Menu"
+            title="Menu">
+      <div class="w-4 h-3.5 flex flex-col justify-between items-start group-hover:items-center transition-all">
+        <span class="w-4 h-[2px] bg-starlight/90 group-hover:bg-white rounded-full transition-all"></span>
+        <span class="w-2.5 group-hover:w-4 h-[2px] bg-starlight/90 group-hover:bg-white rounded-full transition-all"></span>
+        <span class="w-4 h-[2px] bg-starlight/90 group-hover:bg-white rounded-full transition-all"></span>
+      </div>
     </button>
 
-    <!-- Ambient Audio Toggle -->
-    <button id="audio-toggle" 
-            class="group flex items-center gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-full glass-card hover:border-starlight/40 text-xs font-mono text-slate-300 hover:text-starlight transition-all duration-300 shadow-xl flex-shrink-0"
-            title="Toggle Ambient Audio (or press Space / M)">
-      <div id="audio-indicator" class="flex items-end gap-[2px] h-3.5 w-3.5">
-        <span class="w-[2px] h-2 rounded-full bg-twilight transition-colors group-hover:bg-starlight bar-1"></span>
-        <span class="w-[2px] h-3.5 rounded-full bg-twilight transition-colors group-hover:bg-starlight bar-2"></span>
-        <span class="w-[2px] h-1.5 rounded-full bg-twilight transition-colors group-hover:bg-starlight bar-3"></span>
-        <span class="w-[2px] h-2.5 rounded-full bg-twilight transition-colors group-hover:bg-starlight bar-4"></span>
-      </div>
-      <span id="audio-label" class="hidden sm:inline text-xs font-mono tracking-wide">Sound on / Ambient Drift</span>
-      <span id="audio-badge" class="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-starlight transition-colors"></span>
+    <!-- Top-Right: Crescent Moon -->
+    <button id="nav-moon-btn" 
+            class="group p-3 rounded-full glass-card border border-white/10 hover:border-starlight/50 bg-void-900/60 hover:bg-void-850/80 backdrop-blur-xl text-starlight hover:text-white transition-all duration-300 shadow-2xl active:scale-95 flex items-center justify-center cursor-pointer pointer-events-auto"
+            aria-label="Celestial Sound & Mood"
+            title="Toggle Ambient Drift">
+      <i data-lucide="moon" class="w-4 h-4 sm:w-5 sm:h-5 text-starlight/90 group-hover:text-white transition-transform group-hover:rotate-12 duration-300"></i>
     </button>
+  </header>
 
-    <!-- Constellation NOVA Toggle Button -->
-    <button id="constellation-toggle" 
-            class="group flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-full glass-card border-starlight/40 bg-starlight/10 text-xs font-mono text-starlight hover:text-white transition-all duration-300 shadow-xl flex-shrink-0"
-            title="Toggle NOVA Constellation vs Spiral Galaxy (Shortcut: C)">
-      <i data-lucide="sparkles" class="w-3.5 h-3.5 text-starlight transition-transform group-hover:scale-110"></i>
-      <span id="constellation-text" class="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">NOVA</span>
-      <span class="hidden lg:inline text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 group-hover:text-starlight">C</span>
-    </button>
-
-
-    <!-- Alternate Index: NGC 6302 Butterfly Nebula Sky -->
-    <a href="nebula.html" 
-       class="group flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-full glass-card border-orange-500/30 bg-orange-500/10 text-xs font-mono text-amber-300 hover:text-white hover:border-orange-400/50 transition-all duration-300 shadow-xl flex-shrink-0"
-       title="View Alternate Index: NGC 6302 Butterfly Nebula Sky">
-      <i data-lucide="cloud" class="w-3.5 h-3.5 text-orange-400 transition-transform group-hover:scale-110"></i>
-      <span class="hidden sm:inline text-[11px] uppercase tracking-wider">NEBULA</span>
-      <span class="hidden lg:inline text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-amber-300/80">ALT</span>
-    </a>
-
-    <!-- Toggle UI Visibility Button -->
-    <button id="ui-visibility-toggle" 
-            class="group flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-full glass-card border-starlight/30 hover:border-starlight/60 bg-starlight/10 hover:bg-starlight/20 text-xs font-mono text-starlight hover:text-white transition-all duration-300 shadow-xl flex-shrink-0"
-            title="Toggle UI Interface (Shortcut: U)">
-      <i data-lucide="layout" class="w-3.5 h-3.5 text-starlight group-hover:text-white transition-colors"></i>
-      <span id="ui-visibility-text" class="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold">UI</span>
-      <span class="hidden lg:inline text-[9px] px-1.5 py-0.5 rounded bg-white/10 border border-white/20 text-starlight group-hover:text-white">U</span>
-    </button>
-  </div>
-
-  <!-- TOAST NOTIFICATION CONTAINER -->
-  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- MAIN UI WRAPPER (HIDDEN BY DEFAULT - ALL CODE PRESERVED) -->
-  <div id="main-ui" class="ui-layer relative z-30 min-h-screen flex flex-col justify-between opacity-0 pointer-events-none transition-opacity duration-1000">
-
-    <!-- TOP TELEMETRY HEADER -->
-    <header class="w-full border-b border-white/[0.06] bg-void-950/60 backdrop-blur-md sticky top-0 z-40 transition-all duration-300">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        
-        <!-- Logo & Signal Indicator -->
-        <div class="flex items-center gap-4">
-          <div class="relative flex items-center justify-center w-8 h-8 rounded-lg bg-void-850 border border-white/10 shadow-inner group cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-            <span class="absolute w-2 h-2 rounded-full bg-starlight animate-ping opacity-75"></span>
-            <span class="w-2 h-2 rounded-full bg-starlight shadow-[0_0_8px_#E8D5B5]"></span>
-            <div class="absolute inset-0 rounded-lg border border-starlight/20 group-hover:border-starlight/50 transition-colors"></div>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-display font-semibold tracking-[0.2em] text-sm text-starlight starlight-glow">NOVA</span>
-              <span class="text-[10px] font-mono tracking-widest text-twilight">//</span>
-              <span class="text-xs font-mono tracking-widest text-slate-400">SIGNALS FROM THE VOID</span>
-            </div>
-            <div class="text-[10px] font-mono text-twilight flex items-center gap-2">
-              <span>MCP TELEMETRY REGISTRY</span>
-              <span class="w-1 h-1 rounded-full bg-slate-600"></span>
-              <span class="text-signal-green flex items-center gap-1">
-                <span class="inline-block w-1.5 h-1.5 rounded-full bg-signal-green"></span>
-                <span>DEEP SPACE LOCK</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Center Telemetry Readout (Desktop) -->
-        <div class="hidden md:flex items-center gap-6 text-[11px] font-mono text-slate-400 border-x border-white/[0.06] px-6 h-10">
-          <div class="flex items-center gap-2">
-            <i data-lucide="clock" class="w-3.5 h-3.5 text-twilight"></i>
-            <span id="utc-clock">00:00:00 UTC</span>
-          </div>
-          <div class="w-px h-3 bg-white/10"></div>
-          <div class="flex items-center gap-2">
-            <i data-lucide="radio" class="w-3.5 h-3.5 text-twilight"></i>
-            <span>1420.405 MHz <span class="text-[9px] text-twilight">(H-LINE)</span></span>
-          </div>
-          <div class="w-px h-3 bg-white/10"></div>
-          <div class="flex items-center gap-1.5 text-slate-400">
-            <i data-lucide="compass" class="w-3.5 h-3.5 text-twilight"></i>
-            <span>RA 17h 45m | DEC -29°00′</span>
-          </div>
-        </div>
-
-        <!-- Controls: Audio Toggle & Transmit -->
-        <div class="flex items-center gap-3">
-          <!-- Audio Toggle Button in Header -->
-          <button id="audio-toggle-header" 
-                  class="group flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-void-900/80 border border-white/10 hover:border-starlight/40 transition-all duration-300 shadow-lg"
-                  aria-label="Toggle Generative Ambient Audio">
-            <!-- Visualizer Bars / Static Circle -->
-            <div id="audio-indicator-header" class="flex items-end gap-[2px] h-3.5 w-3.5">
-              <span class="w-[2px] h-2 rounded-full bg-twilight transition-colors group-hover:bg-starlight bar-1"></span>
-              <span class="w-[2px] h-3.5 rounded-full bg-twilight transition-colors group-hover:bg-starlight bar-2"></span>
-              <span class="w-[2px] h-1.5 rounded-full bg-twilight transition-colors group-hover:bg-starlight bar-3"></span>
-              <span class="w-[2px] h-2.5 rounded-full bg-twilight transition-colors group-hover:bg-starlight bar-4"></span>
-            </div>
-            <span id="audio-label-header" class="text-xs font-mono text-slate-300 group-hover:text-starlight transition-colors">
-              Sound on / Ambient Drift
-            </span>
-            <span id="audio-badge-header" class="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-starlight transition-colors"></span>
-          </button>
-
-          <!-- Transmit New Protocol Button -->
-          <button id="transmit-btn" 
-                  class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-starlight/10 border border-starlight/25 hover:bg-starlight/20 hover:border-starlight/50 text-starlight text-xs font-mono transition-all duration-300">
-            <i data-lucide="satellite" class="w-3.5 h-3.5"></i>
-            <span>+ Broadcast Signal</span>
-          </button>
-        </div>
-
-      </div>
-    </header>
-
-    <!-- HERO SECTION: OPENAI ASTRA FLANKING TYPOGRAPHY & FLUID GALAXY -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col items-center">
-      
-      <!-- Screen-spanning Flanking Typography (GPT & Astra) framing the 3D galaxy -->
-      <section class="w-full min-h-[48vh] sm:min-h-[75vh] flex items-center justify-between pointer-events-none select-none my-2 sm:my-4">
-        <!-- Left: GPT -->
-        <div class="pointer-events-auto">
-          <h1 id="brand-letter-left" class="text-3xl xs:text-5xl sm:text-7xl md:text-8xl lg:text-[11rem] font-sans font-medium tracking-tight text-white/95 drop-shadow-2xl">
-            GPT
-          </h1>
-        </div>
-
-        <!-- Center: Open area where 3D Fluid Galaxy swirls and reacts to cursor -->
-        <div class="flex-grow"></div>
-
-        <!-- Right: Astra -->
-        <div class="pointer-events-auto text-right">
-          <h1 id="brand-letter-right" class="text-3xl xs:text-5xl sm:text-7xl md:text-8xl lg:text-[11rem] font-sans font-medium tracking-tight text-white/95 drop-shadow-2xl">
-            Astra
-          </h1>
-        </div>
-      </section>
-
-      <!-- Scroll / Interaction Hint -->
-      <div class="flex items-center gap-3 text-[11px] font-mono tracking-[0.25em] text-slate-400 uppercase mb-16">
-        <span class="w-1.5 h-1.5 rounded-full bg-starlight animate-ping"></span>
-        <span>DRAG TO STIR FLUID STARDUST • EXPLORE REGISTRY BELOW</span>
-        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-500 animate-bounce"></i>
-      </div>
-      
-      <!-- Top Cosmic Pill -->
-      <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-void-900/80 border border-white/10 text-xs font-mono text-ether mb-8 shadow-inner animate-float">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-starlight opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-starlight"></span>
-        </span>
-        <span class="tracking-wider uppercase text-[11px]">AUTONOMOUS PROTOCOL BEACONS • EPOCH 2026</span>
-        <span class="text-white/20">|</span>
-        <span class="text-slate-400">6 DRIFTING SIGNALS RECOVERED</span>
-      </div>
-
-      <!-- Main Poetic Headline -->
-      <h1 class="font-serif italic font-normal text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-starlight starlight-glow tracking-tight leading-[1.08] max-w-4xl mb-6">
-        In the quiet of the void, signals persist.
-      </h1>
-
-      <!-- Subtitle -->
-      <p class="font-mono text-slate-400 text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed tracking-wide mb-10">
-        A curated registry of <span class="text-starlight font-medium">Model Context Protocols</span> drifting across the network. Deep tool pipelines, isolated file gateways, and cosmic telemetry servers.
-      </p>
-
-      <!-- SEARCH & FILTER TOOLBAR -->
-      <div class="w-full max-w-2xl mb-12">
-        <div class="relative group">
-          <div class="absolute inset-0 bg-gradient-to-r from-starlight/10 via-twilight/20 to-starlight/10 rounded-2xl blur-xl opacity-30 group-hover:opacity-60 transition duration-700"></div>
-          
-          <div class="relative flex items-center bg-void-900/90 border border-white/15 rounded-2xl p-2 shadow-2xl backdrop-blur-xl group-focus-within:border-starlight/50 transition-all duration-300">
-            <i data-lucide="search" class="w-5 h-5 text-twilight ml-3 mr-2"></i>
-            <input id="search-input" 
-                   type="text" 
-                   placeholder="Search MCP servers by capability, transport, or name..." 
-                   class="w-full bg-transparent text-sm text-starlight placeholder-slate-500 focus:outline-none font-mono py-1.5 px-2"
-                   autocomplete="off">
-            <button id="clear-search" class="hidden text-slate-500 hover:text-slate-300 p-1 mr-1">
-              <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-            <div class="flex items-center gap-1.5 bg-void-800/80 border border-white/10 rounded-xl px-2.5 py-1 text-[11px] font-mono text-slate-400 cursor-pointer hover:border-starlight/30 transition-colors"
-                 onclick="openCommandPalette()">
-              <kbd class="text-[10px]">⌘</kbd>
-              <span>K</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Filter Tags -->
-        <div class="flex items-center justify-center flex-wrap gap-2 mt-4 text-xs font-mono">
-          <button class="filter-pill active glass-pill px-3 py-1 rounded-full text-starlight border-starlight/40" data-category="all">
-            All Signals (6)
-          </button>
-          <button class="filter-pill glass-pill px-3 py-1 rounded-full text-slate-400 hover:text-starlight" data-category="storage">
-            Filesystem & OS
-          </button>
-          <button class="filter-pill glass-pill px-3 py-1 rounded-full text-slate-400 hover:text-starlight" data-category="database">
-            Data Gateways
-          </button>
-          <button class="filter-pill glass-pill px-3 py-1 rounded-full text-slate-400 hover:text-starlight" data-category="search">
-            Omni Search
-          </button>
-          <button class="filter-pill glass-pill px-3 py-1 rounded-full text-slate-400 hover:text-starlight" data-category="agent">
-            Cognitive & Memory
-          </button>
-        </div>
-      </div>
-
-      <!-- MCP PROBES TELEMETRY GRID -->
-      <div id="cards-grid" class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
-        <!-- Cards will be dynamically injected or statically rendered here for SEO and instant render -->
-      </div>
-
-      <!-- ZERO RESULTS EMPTY STATE -->
-      <div id="empty-state" class="hidden flex-col items-center justify-center py-16 text-center">
-        <i data-lucide="radio-tower" class="w-12 h-12 text-twilight mb-4 animate-pulse"></i>
-        <h3 class="font-serif italic text-2xl text-starlight mb-2">No transmissions received on this frequency</h3>
-        <p class="font-mono text-xs text-slate-500 max-w-sm">No MCP beacons match your query parameters. Adjust filters or broadcast a new signal into the void.</p>
-        <button onclick="resetSearch()" class="mt-4 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-starlight hover:border-starlight/30 transition-colors">
-          Reset Telemetry Scan
-        </button>
-      </div>
-
-    </main>
-
-    <!-- FOOTER TELEMETRY STRIP -->
-    <footer class="w-full border-t border-white/[0.06] bg-void-950/80 backdrop-blur-md py-6 text-xs font-mono text-slate-500">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        
-        <div class="flex items-center gap-3">
-          <span class="w-2 h-2 rounded-full bg-signal-green"></span>
-          <span class="text-slate-400">ASTRA CORE // RECEPTOR STATION 09</span>
-          <span class="text-twilight">•</span>
-          <span>LATENCY: 1.2 AU DRIFT</span>
-        </div>
-
-        <div class="flex items-center gap-6">
-          <button onclick="openModal('manifesto-modal')" class="hover:text-starlight transition-colors">
-            // Manifesto
-          </button>
-          <button onclick="openModal('telemetry-modal')" class="hover:text-starlight transition-colors">
-            // Telemetry Specs
-          </button>
-          <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer" class="hover:text-starlight transition-colors flex items-center gap-1">
-            <span>MCP Protocol</span>
-            <i data-lucide="external-link" class="w-3 h-3"></i>
-          </a>
-        </div>
-
-        <div class="text-[11px] text-slate-600">
-          DESIGNED FOR DEEP SPACE OBSERVATION • NO COOKIES • NO TRACKING
-        </div>
-
-      </div>
-    </footer>
-
-  </div>
-
-  <!-- COMMAND PALETTE MODAL (⌘K) -->
-  <div id="command-modal" class="fixed inset-0 z-50 hidden flex items-start justify-center pt-20 px-4">
-    <div class="fixed inset-0 bg-void-950/80 backdrop-blur-md" onclick="closeCommandPalette()"></div>
-    <div class="relative w-full max-w-xl bg-void-900 border border-starlight/20 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col">
-      <div class="flex items-center px-4 py-3 border-b border-white/10">
-        <i data-lucide="terminal" class="w-4 h-4 text-starlight mr-3"></i>
-        <input id="palette-input" 
-               type="text" 
-               placeholder="Type a command or jump to an MCP probe..." 
-               class="w-full bg-transparent text-sm text-starlight placeholder-slate-500 font-mono focus:outline-none">
-        <span class="text-[10px] font-mono text-slate-500 px-2 py-0.5 rounded border border-white/10">ESC</span>
-      </div>
-      <div id="palette-results" class="max-h-80 overflow-y-auto p-2 font-mono text-xs flex flex-col gap-1">
-        <!-- Palette items generated dynamically -->
-      </div>
-    </div>
-  </div>
-
-  <!-- INSPECT PROTOCOL MODAL -->
-  <div id="inspect-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-void-950/85 backdrop-blur-md" onclick="closeModal('inspect-modal')"></div>
-    <div class="relative w-full max-w-2xl bg-void-900 border border-white/15 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[85vh]">
-      
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-void-850">
-        <div class="flex items-center gap-3">
-          <div id="modal-icon" class="p-2 rounded-lg bg-starlight/10 border border-starlight/20 text-starlight">
-            <i data-lucide="cpu" class="w-4 h-4"></i>
-          </div>
-          <div>
-            <h3 id="modal-title" class="font-display font-semibold text-starlight text-base">Filesystem Core Beacon</h3>
-            <p id="modal-spec" class="font-mono text-[10px] text-twilight">SPEC: MCP/2024-11-05 • TRANSPORT: STDIO</p>
-          </div>
-        </div>
-        <button onclick="closeModal('inspect-modal')" class="p-1 rounded-lg text-slate-400 hover:text-starlight hover:bg-white/5 transition-colors">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="p-6 overflow-y-auto space-y-6 font-mono text-xs">
-        <div>
-          <label class="text-[10px] text-twilight uppercase tracking-widest block mb-2">// TRANSMISSION SUMMARY</label>
-          <p id="modal-description" class="text-slate-300 leading-relaxed bg-void-950/50 p-3 rounded-xl border border-white/5"></p>
-        </div>
-
-        <div>
-          <label class="text-[10px] text-twilight uppercase tracking-widest block mb-2">// CAPABILITY MATRIX (EXPOSED TOOLS)</label>
-          <div id="modal-tools" class="flex flex-wrap gap-1.5"></div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-[10px] text-twilight uppercase tracking-widest">// CLIENT CONFIGURATION SNIPPET (JSON-RPC 2.0)</label>
-            <button id="modal-copy-btn" class="text-[11px] text-starlight hover:text-white flex items-center gap-1 transition-colors">
-              <i data-lucide="copy" class="w-3 h-3"></i>
-              <span>Copy Config</span>
-            </button>
-          </div>
-          <pre id="modal-json" class="bg-void-950 p-4 rounded-xl border border-white/10 text-[11px] text-starlight/90 overflow-x-auto selection:bg-twilight"></pre>
-        </div>
-
-        <div>
-          <label class="text-[10px] text-twilight uppercase tracking-widest block mb-2">// QUICK LAUNCH COMMAND</label>
-          <div class="flex items-center justify-between bg-void-950 p-3 rounded-xl border border-white/10">
-            <code id="modal-command" class="text-signal-green text-[11px]"></code>
-            <button id="modal-copy-cmd-btn" class="text-slate-400 hover:text-starlight ml-2">
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="flex items-center justify-between px-6 py-3 border-t border-white/10 bg-void-850">
-        <span class="text-[10px] font-mono text-slate-500">FORMAT: ANTHROPIC CLAUDE / CURSOR COMPATIBLE</span>
-        <button onclick="closeModal('inspect-modal')" class="px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-slate-300 hover:text-starlight hover:border-starlight/30 transition-colors">
-          Dismiss
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- TRANSMIT NEW SIGNAL MODAL -->
-  <div id="transmit-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-void-950/85 backdrop-blur-md" onclick="closeModal('transmit-modal')"></div>
-    <div class="relative w-full max-w-lg bg-void-900 border border-starlight/30 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-void-850">
-        <div class="flex items-center gap-2">
-          <i data-lucide="satellite-dish" class="w-4 h-4 text-starlight"></i>
-          <h3 class="font-display font-semibold text-starlight text-sm tracking-wider uppercase">BROADCAST SIGNAL TO THE VOID</h3>
-        </div>
-        <button onclick="closeModal('transmit-modal')" class="text-slate-400 hover:text-starlight">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-      <form id="broadcast-form" onsubmit="handleBroadcast(event)" class="p-6 space-y-4 font-mono text-xs">
-        <div>
-          <label class="block text-[10px] text-twilight uppercase tracking-wider mb-1">MCP SERVER IDENTIFIER</label>
-          <input required id="broadcast-name" type="text" placeholder="e.g. Neo4j Graph Beacon" class="w-full bg-void-950 border border-white/10 rounded-xl px-3 py-2 text-starlight focus:outline-none focus:border-starlight/50">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[10px] text-twilight uppercase tracking-wider mb-1">TRANSPORT</label>
-            <select id="broadcast-transport" class="w-full bg-void-950 border border-white/10 rounded-xl px-3 py-2 text-starlight focus:outline-none focus:border-starlight/50">
-              <option value="stdio">stdio (Local Subprocess)</option>
-              <option value="sse">SSE (Server-Sent Events)</option>
-              <option value="stream">WebSocket Stream</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[10px] text-twilight uppercase tracking-wider mb-1">CATEGORY</label>
-            <select id="broadcast-category" class="w-full bg-void-950 border border-white/10 rounded-xl px-3 py-2 text-starlight focus:outline-none focus:border-starlight/50">
-              <option value="storage">Filesystem & OS</option>
-              <option value="database">Data Gateways</option>
-              <option value="search">Omni Search</option>
-              <option value="agent">Cognitive & Memory</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="block text-[10px] text-twilight uppercase tracking-wider mb-1">PACKAGE OR DOCKER URI</label>
-          <input required id="broadcast-pkg" type="text" placeholder="e.g. npx -y @modelcontextprotocol/server-neo4j" class="w-full bg-void-950 border border-white/10 rounded-xl px-3 py-2 text-starlight focus:outline-none focus:border-starlight/50">
-        </div>
-        <div>
-          <label class="block text-[10px] text-twilight uppercase tracking-wider mb-1">TRANSMISSION SUMMARY</label>
-          <textarea required id="broadcast-desc" rows="3" placeholder="Describe capabilities, exposed prompts, and resource schemes..." class="w-full bg-void-950 border border-white/10 rounded-xl p-3 text-starlight focus:outline-none focus:border-starlight/50"></textarea>
-        </div>
-        <div class="pt-2">
-          <button type="submit" class="w-full py-2.5 rounded-xl bg-starlight text-void-950 font-semibold hover:bg-starlight-glow transition-all flex items-center justify-center gap-2 shadow-lg">
-            <i data-lucide="radio" class="w-4 h-4"></i>
-            <span>TRANSMIT BEACON</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MANIFESTO MODAL -->
-  <div id="manifesto-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-void-950/85 backdrop-blur-md" onclick="closeModal('manifesto-modal')"></div>
-    <div class="relative w-full max-w-lg bg-void-900 border border-white/15 rounded-2xl shadow-2xl p-6 overflow-hidden z-10">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-serif italic text-2xl text-starlight">Astra Manifesto // Signals from the Void</h3>
-        <button onclick="closeModal('manifesto-modal')" class="text-slate-400 hover:text-starlight">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-      <div class="font-mono text-xs text-slate-400 space-y-4 leading-relaxed">
-        <p>
-          In a world of clamoring noise and frantic interfaces, Astra was built as a sanctuary of quiet cosmic contemplation.
-        </p>
-        <p>
-          The <span class="text-starlight">Model Context Protocol</span> allows language models to step outside their disembodied weight matrices and interact with the physical and digital world—reading files, surveying databases, and perceiving signals.
-        </p>
-        <p>
-          Every particle in this nebula drifts according to curl fields; the planet midground is cast in perpetual twilight. May these tools serve your autonomous systems with clarity, quiet solitude, and grace.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- TELEMETRY MODAL -->
-  <div id="telemetry-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-void-950/85 backdrop-blur-md" onclick="closeModal('telemetry-modal')"></div>
-    <div class="relative w-full max-w-lg bg-void-900 border border-white/15 rounded-2xl shadow-2xl p-6 overflow-hidden z-10">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-display font-semibold text-sm text-starlight uppercase tracking-wider">TELEMETRY ARCHITECTURE</h3>
-        <button onclick="closeModal('telemetry-modal')" class="text-slate-400 hover:text-starlight">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-      <div class="font-mono text-xs text-slate-400 space-y-3">
-        <div class="p-3 bg-void-950 rounded-xl border border-white/5">
-          <div class="text-[10px] text-twilight">SYNTHESIS ENGINE</div>
-          <div class="text-starlight">Pure Web Audio API (Dual oscillators, 4.5s algorithmic convolution reverb, Erik Satie pentatonic chord sequencer)</div>
-        </div>
-        <div class="p-3 bg-void-950 rounded-xl border border-white/5">
-          <div class="text-[10px] text-twilight">GRAPHICS ENGINE</div>
-          <div class="text-starlight">WebGL / Three.js r128 (4,200 particle fluid field with mouse inertial damping, solitary procedural celestial body with starlight Fresnel shader)</div>
-        </div>
-        <div class="p-3 bg-void-950 rounded-xl border border-white/5">
-          <div class="text-[10px] text-twilight">PROTOCOL COMPATIBILITY</div>
-          <div class="text-starlight">MCP Spec 2024-11-05 (JSON-RPC 2.0 stdio / SSE transport)</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Virtual Scroll Spacer (Enables smooth native momentum scrolling on desktop & mobile) -->
+  <div id="scroll-spacer" class="w-full pointer-events-none" style="height: 220vh;"></div>
 
   <!-- ========================================== -->
   <!-- JAVASCRIPT: DATA, AUDIO, WEBGL & LOGIC     -->
   <!-- ========================================== -->
   <script>
     // ----------------------------------------------------
-    // 1. MCP PROBE DATA STORE
-    // ----------------------------------------------------
-    const MCP_PROBES = [
-      {
-        id: "filesystem-core",
-        name: "Filesystem Core Beacon",
-        category: "storage",
-        categoryLabel: "Filesystem & OS",
-        icon: "folder-code",
-        status: "ACTIVE // 99.4% SIGNAL",
-        statusColor: "signal-green",
-        spec: "MCP/2024-11-05",
-        transport: "stdio",
-        toolsCount: 8,
-        resourcesCount: 4,
-        tools: ["read_file", "write_file", "list_directory", "move_file", "file_search", "get_file_info", "list_allowed_directories", "read_multiple_files"],
-        description: "Local root exploration and secure atomic manipulation across host storage volumes with strict sandbox enforcement.",
-        command: "npx -y @modelcontextprotocol/server-filesystem /Users/user/workspace",
-        config: {
-          mcpServers: {
-            "filesystem": {
-              command: "npx",
-              args: ["-y", "@modelcontextprotocol/server-filesystem", "/Users/user/workspace"]
-            }
-          }
-        }
-      },
-      {
-        id: "postgres-gateway",
-        name: "PostgreSQL Gateway",
-        category: "database",
-        categoryLabel: "Data Gateways",
-        icon: "database",
-        status: "ACTIVE // 96.8% SIGNAL",
-        statusColor: "signal-green",
-        spec: "MCP/2024-11-05",
-        transport: "stdio",
-        toolsCount: 6,
-        resourcesCount: 12,
-        tools: ["query_read", "describe_table", "list_tables", "explain_analyze", "pool_telemetry", "table_schema"],
-        description: "Read-only relational query beacon with strict AST-level mutation prevention, SSL cipher tunnels, and query plan tracing.",
-        command: "npx -y @modelcontextprotocol/server-postgres postgresql://readonly:void@localhost:5432/telemetry",
-        config: {
-          mcpServers: {
-            "postgres": {
-              command: "npx",
-              args: ["-y", "@modelcontextprotocol/server-postgres", "postgresql://readonly:void@localhost:5432/telemetry"]
-            }
-          }
-        }
-      },
-      {
-        id: "brave-beacon",
-        name: "Brave Search Beacon",
-        category: "search",
-        categoryLabel: "Omni Search",
-        icon: "globe",
-        status: "ACTIVE // 98.7% SIGNAL",
-        statusColor: "signal-green",
-        spec: "MCP/2024-11-05",
-        transport: "stdio",
-        toolsCount: 4,
-        resourcesCount: 1,
-        tools: ["brave_web_search", "brave_local_search", "extract_summaries", "news_telemetry"],
-        description: "Broadband omni-directional web telemetry and real-time knowledge discovery without tracking or telemetry leakage.",
-        command: "npx -y @modelcontextprotocol/server-brave-search",
-        config: {
-          mcpServers: {
-            "brave-search": {
-              command: "npx",
-              args: ["-y", "@modelcontextprotocol/server-brave-search"],
-              env: {
-                "BRAVE_API_KEY": "BSAz09_VOID_SIGNAL_KEY"
-              }
-            }
-          }
-        }
-      },
-      {
-        id: "github-sentry",
-        name: "GitHub Sentry Node",
-        category: "storage",
-        categoryLabel: "Filesystem & OS",
-        icon: "git-branch",
-        status: "ACTIVE // 94.2% SIGNAL",
-        statusColor: "signal-amber",
-        spec: "MCP/2024-11-05",
-        transport: "stdio",
-        toolsCount: 14,
-        resourcesCount: 8,
-        tools: ["get_file_contents", "create_or_update_file", "search_repositories", "list_pull_requests", "create_issue", "fork_repository"],
-        description: "Direct synchronization with remote repository trees, branch differential audits, and automated issue triage.",
-        command: "npx -y @modelcontextprotocol/server-github",
-        config: {
-          mcpServers: {
-            "github": {
-              command: "npx",
-              args: ["-y", "@modelcontextprotocol/server-github"],
-              env: {
-                "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_voidStarlight..."
-              }
-            }
-          }
-        }
-      },
-      {
-        id: "puppeteer-probe",
-        name: "Puppeteer Vision Vessel",
-        category: "search",
-        categoryLabel: "Omni Search",
-        icon: "eye",
-        status: "ACTIVE // 91.5% SIGNAL",
-        statusColor: "signal-cyan",
-        spec: "MCP/2024-11-05",
-        transport: "stdio",
-        toolsCount: 7,
-        resourcesCount: 2,
-        tools: ["puppeteer_navigate", "puppeteer_screenshot", "puppeteer_click", "puppeteer_fill", "puppeteer_evaluate"],
-        description: "Headless browser observation vessel capturing high-resolution visual viewport snapshots and live DOM tree queries.",
-        command: "npx -y @modelcontextprotocol/server-puppeteer",
-        config: {
-          mcpServers: {
-            "puppeteer": {
-              command: "npx",
-              args: ["-y", "@modelcontextprotocol/server-puppeteer"]
-            }
-          }
-        }
-      },
-      {
-        id: "vector-vault",
-        name: "Vector Vault Core",
-        category: "agent",
-        categoryLabel: "Cognitive & Memory",
-        icon: "cpu",
-        status: "ACTIVE // 97.9% SIGNAL",
-        statusColor: "signal-green",
-        spec: "MCP/2024-11-05",
-        transport: "stdio",
-        toolsCount: 5,
-        resourcesCount: 6,
-        tools: ["store_memory", "retrieve_memories", "cosine_similarity_scan", "cluster_thoughts", "forget_memory"],
-        description: "Persistent long-term cognitive embeddings store for autonomous reasoning continuity across disconnected sessions.",
-        command: "npx -y @modelcontextprotocol/server-memory",
-        config: {
-          mcpServers: {
-            "memory-vault": {
-              command: "npx",
-              args: ["-y", "@modelcontextprotocol/server-memory"]
-            }
-          }
-        }
-      }
-    ];
-
-    // ----------------------------------------------------
-    // 2. AUDIO SYNTHESIZER: ERIK SATIE / INTERSTELLAR ENGINE
+    // 1. AUDIO SYNTHESIZER: ERIK SATIE / INTERSTELLAR ENGINE
     // ----------------------------------------------------
     class CosmicAudioEngine {
       constructor() {
@@ -1165,7 +565,6 @@
     let introStartTime = 0;
     let hasExploded = false;
     let introComplete = false;
-    let isUiVisible = false;
     const rotSpeed = -0.0022; // Synchronized constant anticlockwise galactic spin (preloaded)
 
     // Apple-Font "NOVA" Constellation Morph Targets & Scroll State
@@ -1890,12 +1289,7 @@
         novaTargets = generateNovaTargets(starCount);
       }
 
-      if (typeof syncConstellationBtn === 'function') syncConstellationBtn();
-      const uiText = document.getElementById('ui-visibility-text');
-      if (uiText) {
-        const isSmall = window.innerWidth < 640;
-        uiText.textContent = isUiVisible ? (isSmall ? 'HIDE' : 'HIDE UI') : (isSmall ? 'UI' : 'SHOW UI');
-      }
+
     }
 
     function onMouseMove(e) {
@@ -1920,12 +1314,14 @@
         mouse2D.x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
         mouse2D.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
 
-        // Mobile touch swipe gestures drive NOVA morphing when UI is not visible or at top
-        if (introComplete && (!isUiVisible || window.scrollY <= 15)) {
+        // Mobile touch swipe gestures drive NOVA morphing
+        if (introComplete) {
           const deltaY = touchStartY - e.touches[0].clientY;
           wheelScrollAccumulator += deltaY * 0.0035;
           wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
           touchStartY = e.touches[0].clientY;
+          const maxScroll = Math.max(window.innerHeight * 0.9, 350);
+          window.scrollTo({ top: wheelScrollAccumulator * maxScroll, behavior: 'auto' });
           if (typeof updateScrollMorph === 'function') updateScrollMorph();
         }
       }
@@ -2081,21 +1477,7 @@
           galaxyCoreMesh.scale.set(coreScale, coreScale, 1);
         }
 
-        // 4. Reveal Minimal HUD controls right as the nebula reaches full blossom (at t = 3.1s)
-        if (introT >= 3.1) {
-          const topHud = document.getElementById('top-hud');
-          if (topHud && topHud.classList.contains('opacity-0')) {
-            topHud.classList.remove('opacity-0', 'pointer-events-none');
-            topHud.classList.add('opacity-100');
-          }
-          if (isUiVisible) {
-            const mainUi = document.getElementById('main-ui');
-            if (mainUi && mainUi.classList.contains('opacity-0')) {
-              mainUi.classList.remove('opacity-0', 'pointer-events-none');
-              mainUi.classList.add('opacity-100');
-            }
-          }
-        }
+
 
         if (galaxyMesh.material.uniforms) {
           galaxyMesh.material.uniforms.uTime.value = elapsedTime;
@@ -2114,19 +1496,6 @@
         for (let i = 0; i < starCount * 3; i++) {
           velocities[i] = 0;
           fluidOffsets[i] = 0;
-        }
-
-        const topHud = document.getElementById('top-hud');
-        if (topHud) {
-          topHud.classList.remove('opacity-0', 'pointer-events-none');
-          topHud.classList.add('opacity-100');
-        }
-        if (isUiVisible) {
-          const mainUi = document.getElementById('main-ui');
-          if (mainUi) {
-            mainUi.classList.remove('opacity-0', 'pointer-events-none');
-            mainUi.classList.add('opacity-100');
-          }
         }
       }
 
@@ -2160,6 +1529,22 @@
 
       // Smoothly ease morphProgress toward targetMorph (0.0 = spiral galaxy, 1.0 = assembled NOVA)
       morphProgress += (targetMorph - morphProgress) * 0.065;
+
+      // Reveal makeshift nav bar ONLY when user scrolls to completed NOVA text
+      const makeshiftNav = document.getElementById('makeshift-nav');
+      if (makeshiftNav && introComplete) {
+        if (morphProgress >= 0.88) {
+          if (makeshiftNav.classList.contains('opacity-0')) {
+            makeshiftNav.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-2');
+            makeshiftNav.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0');
+          }
+        } else {
+          if (!makeshiftNav.classList.contains('opacity-0')) {
+            makeshiftNav.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+            makeshiftNav.classList.add('opacity-0', 'pointer-events-none', '-translate-y-2');
+          }
+        }
+      }
 
       const stickDirX = cursorSpeed > 0.0001 ? cursorVx / cursorSpeed : 0;
       const stickDirY = cursorSpeed > 0.0001 ? cursorVy / cursorSpeed : 0;
@@ -2284,7 +1669,6 @@
       targetMorph = 0.0;
       morphProgress = 0.0;
       wheelScrollAccumulator = 0.0;
-      if (typeof syncConstellationBtn === 'function') syncConstellationBtn();
 
       // Reset camera to initial low angle looking up at top-left
       camera.position.set(8.0, -18.0, 26.0);
@@ -2328,646 +1712,88 @@
         shockwaveMesh.scale.set(0.1, 0.1, 1);
       }
 
-      // Hide UI during cinematic intro & return to no-UI cosmic default
-      isUiVisible = false;
-      const mainUi = document.getElementById('main-ui');
-      if (mainUi) {
-        mainUi.classList.remove('opacity-100', 'pointer-events-auto');
-        mainUi.classList.add('opacity-0', 'pointer-events-none');
-      }
-      const topHud = document.getElementById('top-hud');
-      if (topHud) {
-        topHud.classList.remove('opacity-100', 'pointer-events-auto');
-        topHud.classList.add('opacity-0', 'pointer-events-none');
-      }
-      const uiText = document.getElementById('ui-visibility-text');
-      if (uiText) {
-        const isSmall = window.innerWidth < 640;
-        uiText.textContent = isSmall ? 'UI' : 'SHOW UI';
-      }
-      const uiBtn = document.getElementById('ui-visibility-toggle');
-      if (uiBtn) {
-        uiBtn.classList.remove('border-starlight/60', 'bg-starlight/20', 'text-white');
-        uiBtn.classList.add('border-starlight/30', 'bg-starlight/10', 'text-starlight');
+      // Reset window scroll & hide makeshift navbar
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      const makeshiftNav = document.getElementById('makeshift-nav');
+      if (makeshiftNav) {
+        makeshiftNav.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+        makeshiftNav.classList.add('opacity-0', 'pointer-events-none', '-translate-y-2');
       }
     }
 
     // ----------------------------------------------------
-    // 4. UI ENGINE: CARDS, FILTERING, CLIPBOARD & MODALS
+    // 4. SCROLL & GESTURE DRIVEN APPLE-FONT NOVA MORPHING
     // ----------------------------------------------------
-    let currentCategory = 'all';
-    let searchQuery = '';
-
-    function renderProbeCards() {
-      const grid = document.getElementById('cards-grid');
-      const emptyState = document.getElementById('empty-state');
-      if (!grid) return;
-
-      const filtered = MCP_PROBES.filter(probe => {
-        const matchesCategory = currentCategory === 'all' || probe.category === currentCategory;
-        const q = searchQuery.toLowerCase().trim();
-        const matchesSearch = !q || 
-          probe.name.toLowerCase().includes(q) ||
-          probe.description.toLowerCase().includes(q) ||
-          probe.tools.some(t => t.toLowerCase().includes(q)) ||
-          probe.categoryLabel.toLowerCase().includes(q) ||
-          probe.transport.toLowerCase().includes(q);
-        return matchesCategory && matchesSearch;
-      });
-
-      if (filtered.length === 0) {
-        grid.innerHTML = '';
-        emptyState.classList.remove('hidden');
-        emptyState.classList.add('flex');
-        return;
-      } else {
-        emptyState.classList.add('hidden');
-        emptyState.classList.remove('flex');
-      }
-
-      grid.innerHTML = filtered.map(probe => `
-        <div class="glass-card rounded-2xl p-6 flex flex-col justify-between group relative overflow-hidden">
-          
-          <!-- Subtle Top Starlight Sheen -->
-          <div class="absolute -top-12 -right-12 w-28 h-28 bg-starlight/5 rounded-full blur-2xl group-hover:bg-starlight/15 transition-all duration-700 pointer-events-none"></div>
-
-          <div>
-            <!-- Header: Category & Signal Ping -->
-            <div class="flex items-center justify-between gap-2 mb-4">
-              <span class="text-[10px] font-mono tracking-widest uppercase text-twilight bg-white/[0.03] px-2.5 py-1 rounded-full border border-white/5">
-                ${probe.categoryLabel}
-              </span>
-              <div class="flex items-center gap-1.5 text-[10px] font-mono text-${probe.statusColor}">
-                <span class="relative flex h-2 w-2">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-current"></span>
-                </span>
-                <span>${probe.status}</span>
-              </div>
-            </div>
-
-            <!-- Name & Icon -->
-            <div class="flex items-start gap-3 mb-3">
-              <div class="p-2.5 rounded-xl bg-void-850 border border-white/10 text-starlight group-hover:border-starlight/40 group-hover:text-white transition-all shadow-inner">
-                <i data-lucide="${probe.icon}" class="w-5 h-5"></i>
-              </div>
-              <div>
-                <h2 class="font-display font-medium text-starlight text-base group-hover:text-white transition-colors">
-                  ${probe.name}
-                </h2>
-                <div class="flex items-center gap-2 text-[10px] font-mono text-slate-500 mt-0.5">
-                  <span>${probe.spec}</span>
-                  <span>•</span>
-                  <span class="text-ether uppercase">${probe.transport}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Description -->
-            <p class="font-mono text-xs text-slate-400 leading-relaxed mb-4 line-clamp-3">
-              ${probe.description}
-            </p>
-
-            <!-- Capability Badges (Tools & Resources) -->
-            <div class="flex items-center flex-wrap gap-1.5 mb-6">
-              <span class="text-[10px] font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded text-slate-300">
-                ${probe.toolsCount} Tools
-              </span>
-              <span class="text-[10px] font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded text-slate-400">
-                ${probe.resourcesCount} Resources
-              </span>
-              ${probe.tools.slice(0, 2).map(t => `
-                <span class="text-[10px] font-mono bg-starlight/[0.04] border border-starlight/10 px-2 py-0.5 rounded text-starlight/80">
-                  ${t}
-                </span>
-              `).join('')}
-              ${probe.tools.length > 2 ? `
-                <span class="text-[10px] font-mono text-slate-500 px-1 py-0.5">
-                  +${probe.tools.length - 2}
-                </span>
-              ` : ''}
-            </div>
-          </div>
-
-          <!-- Card Actions (Inspect & Copy Config) -->
-          <div class="flex items-center gap-2 pt-4 border-t border-white/[0.06]">
-            
-            <button onclick="inspectProbe('${probe.id}')" 
-                    class="flex-1 py-2 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-xs font-mono text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5">
-              <i data-lucide="scan-line" class="w-3.5 h-3.5 text-twilight"></i>
-              <span>Inspect</span>
-            </button>
-
-            <button onclick="copyProbeConfig('${probe.id}', this)" 
-                    class="copy-btn flex-1 py-2 px-3 rounded-xl bg-starlight/10 hover:bg-starlight/20 border border-starlight/25 hover:border-starlight/50 text-xs font-mono text-starlight hover:text-white transition-all flex items-center justify-center gap-1.5 shadow-sm group/btn">
-              <i data-lucide="copy" class="w-3.5 h-3.5 transition-transform group-hover/btn:scale-110"></i>
-              <span class="btn-text">Copy Config</span>
-            </button>
-
-          </div>
-
-        </div>
-      `).join('');
-
-      // Refresh Lucide icons inside cards
-      if (window.lucide) {
-        window.lucide.createIcons();
-      }
+    function updateScrollMorph() {
+      if (!introComplete) return;
+      const maxScroll = Math.max(window.innerHeight * 0.9, 350);
+      const scrollProgress = THREE.MathUtils.clamp(window.scrollY / maxScroll, 0.0, 1.0);
+      targetMorph = THREE.MathUtils.clamp(Math.max(scrollProgress, wheelScrollAccumulator), 0.0, 1.0);
     }
 
-    // Copy configuration JSON to clipboard
-    function copyProbeConfig(probeId, buttonElement) {
-      const probe = MCP_PROBES.find(p => p.id === probeId);
-      if (!probe) return;
-
-      const configText = JSON.stringify(probe.config, null, 2);
-      navigator.clipboard.writeText(configText).then(() => {
-        cosmicAudio.playClickChime();
-        showToast(`// TELEMETRY COPIED: ${probe.name}`);
-
-        if (buttonElement) {
-          const btnText = buttonElement.querySelector('.btn-text');
-          const originalText = btnText ? btnText.textContent : 'Copy Config';
-          if (btnText) btnText.textContent = 'COPIED // 0x7F';
-          buttonElement.classList.add('bg-starlight', 'text-void-950', 'border-starlight');
-          buttonElement.classList.remove('bg-starlight/10', 'text-starlight');
-
-          setTimeout(() => {
-            if (btnText) btnText.textContent = originalText;
-            buttonElement.classList.remove('bg-starlight', 'text-void-950', 'border-starlight');
-            buttonElement.classList.add('bg-starlight/10', 'text-starlight');
-          }, 2000);
-        }
-      }).catch(err => {
-        console.error('Clipboard copy failed:', err);
-      });
-    }
-
-    // Inspect probe details in Modal
-    function inspectProbe(probeId) {
-      const probe = MCP_PROBES.find(p => p.id === probeId);
-      if (!probe) return;
-
-      cosmicAudio.playClickChime();
-
-      document.getElementById('modal-title').textContent = probe.name;
-      document.getElementById('modal-spec').textContent = `SPEC: ${probe.spec} • TRANSPORT: ${probe.transport.toUpperCase()}`;
-      document.getElementById('modal-description').textContent = probe.description;
-
-      const toolsContainer = document.getElementById('modal-tools');
-      toolsContainer.innerHTML = probe.tools.map(t => `
-        <span class="px-2.5 py-1 rounded-lg bg-void-950 border border-white/10 text-starlight text-[11px] font-mono">
-          ${t}
-        </span>
-      `).join('');
-
-      const jsonStr = JSON.stringify(probe.config, null, 2);
-      document.getElementById('modal-json').textContent = jsonStr;
-      document.getElementById('modal-command').textContent = probe.command;
-
-      document.getElementById('modal-copy-btn').onclick = () => {
-        navigator.clipboard.writeText(jsonStr);
-        cosmicAudio.playClickChime();
-        showToast("// CLIENT CONFIG COPIED");
-      };
-
-      document.getElementById('modal-copy-cmd-btn').onclick = () => {
-        navigator.clipboard.writeText(probe.command);
-        cosmicAudio.playClickChime();
-        showToast("// COMMAND LINE COPIED");
-      };
-
-      openModal('inspect-modal');
-    }
-
-    // Toast Notification System
-    function showToast(message) {
-      const container = document.getElementById('toast-container');
-      if (!container) return;
-
-      const toast = document.createElement('div');
-      toast.className = 'glass-card border-starlight/30 text-starlight text-xs font-mono px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 transform transition-all duration-300 translate-y-4 opacity-0 pointer-events-auto';
-      toast.innerHTML = `
-        <span class="w-1.5 h-1.5 rounded-full bg-starlight animate-ping"></span>
-        <span>${message}</span>
-      `;
-      container.appendChild(toast);
-
-      requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-4', 'opacity-0');
-        toast.classList.add('translate-y-0', 'opacity-100');
-      });
-
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 400);
-      }, 3500);
-    }
-
-    // Modal Helpers
-    function openModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) {
-        modal.classList.remove('hidden');
-        if (window.lucide) window.lucide.createIcons();
-      }
-    }
-
-    function closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) {
-        modal.classList.add('hidden');
-      }
-    }
-
-    // Search & Filter handlers
-    function resetSearch() {
-      searchQuery = '';
-      currentCategory = 'all';
-      const searchInput = document.getElementById('search-input');
-      if (searchInput) searchInput.value = '';
-      document.querySelectorAll('.filter-pill').forEach(pill => {
-        pill.classList.remove('active', 'border-starlight/40', 'text-starlight');
-        if (pill.dataset.category === 'all') {
-          pill.classList.add('active', 'border-starlight/40', 'text-starlight');
-        }
-      });
-      renderProbeCards();
-    }
-
-    // Command Palette (⌘K)
-    function openCommandPalette() {
-      cosmicAudio.playClickChime();
-      const modal = document.getElementById('command-modal');
-      const input = document.getElementById('palette-input');
-      const results = document.getElementById('palette-results');
-      if (!modal || !input) return;
-
-      modal.classList.remove('hidden');
-      input.value = '';
-      input.focus();
-
-      renderPaletteResults('');
-
-      input.oninput = (e) => {
-        renderPaletteResults(e.target.value);
-      };
-    }
-
-    function closeCommandPalette() {
-      const modal = document.getElementById('command-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function renderPaletteResults(query) {
-      const results = document.getElementById('palette-results');
-      if (!results) return;
-
-      const q = query.toLowerCase().trim();
-      const items = [
-        { label: "Replay 3D Sand & Supernova Intro", icon: "rotate-ccw", action: () => { closeCommandPalette(); replayIntroAnimation(); } },
-        { label: "Toggle UI / Observation Mode (Shortcut: U)", icon: "layout", action: () => { closeCommandPalette(); toggleUiVisibility(); } },
-        { label: "Morph Stars to NOVA (Apple Typography) / Galaxy (Shortcut: C)", icon: "sparkles", action: () => { closeCommandPalette(); toggleConstellation(); } },
-        { label: "Anticlockwise Nebula Drift (Synchronized)", icon: "compass", action: () => { closeCommandPalette(); toggleRotationDirection(); } },
-        { label: "Toggle Ambient Drift Audio", icon: "volume-2", action: () => document.getElementById('audio-toggle').click() },
-        { label: "Broadcast New Signal", icon: "satellite", action: () => { closeCommandPalette(); openModal('transmit-modal'); } },
-        { label: "Read Astra Manifesto", icon: "book-open", action: () => { closeCommandPalette(); openModal('manifesto-modal'); } },
-        ...MCP_PROBES.map(p => ({
-          label: `Jump to: ${p.name}`,
-          icon: p.icon,
-          desc: p.description,
-          action: () => { closeCommandPalette(); inspectProbe(p.id); }
-        }))
-      ];
-
-      const filtered = items.filter(item => !q || item.label.toLowerCase().includes(q) || (item.desc && item.desc.toLowerCase().includes(q)));
-
-      results.innerHTML = filtered.map(item => `
-        <div class="palette-item p-2.5 rounded-xl hover:bg-white/10 cursor-pointer flex items-center justify-between text-slate-300 hover:text-starlight transition-colors">
-          <div class="flex items-center gap-3">
-            <i data-lucide="${item.icon}" class="w-4 h-4 text-twilight"></i>
-            <span>${item.label}</span>
-          </div>
-          <i data-lucide="corner-down-left" class="w-3.5 h-3.5 text-slate-600"></i>
-        </div>
-      `).join('');
-
-      if (window.lucide) window.lucide.createIcons();
-
-      const renderedItems = results.querySelectorAll('.palette-item');
-      renderedItems.forEach((el, index) => {
-        el.onclick = () => filtered[index].action();
-      });
-    }
-
-    // Toggle UI Visibility (Pure cosmic nebula view by default, reveals UI on press)
-    function toggleUiVisibility(forceState) {
-      if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
-      if (typeof forceState === 'boolean') {
-        isUiVisible = forceState;
-      } else {
-        isUiVisible = !isUiVisible;
-      }
-
-      const mainUi = document.getElementById('main-ui');
-      const uiBtn = document.getElementById('ui-visibility-toggle');
-      const uiText = document.getElementById('ui-visibility-text');
-
-      if (mainUi) {
-        if (isUiVisible) {
-          mainUi.classList.remove('opacity-0', 'pointer-events-none');
-          mainUi.classList.add('opacity-100', 'pointer-events-auto');
-        } else {
-          mainUi.classList.remove('opacity-100', 'pointer-events-auto');
-          mainUi.classList.add('opacity-0', 'pointer-events-none');
-        }
-      }
-
-      if (uiText) {
-        const isSmall = window.innerWidth < 640;
-        uiText.textContent = isUiVisible ? (isSmall ? 'HIDE' : 'HIDE UI') : (isSmall ? 'UI' : 'SHOW UI');
-      }
-
-      if (uiBtn) {
-        if (isUiVisible) {
-          uiBtn.classList.add('border-starlight/60', 'bg-starlight/20', 'text-white');
-          uiBtn.classList.remove('border-starlight/30', 'bg-starlight/10', 'text-starlight');
-        } else {
-          uiBtn.classList.remove('border-starlight/60', 'bg-starlight/20', 'text-white');
-          uiBtn.classList.add('border-starlight/30', 'bg-starlight/10', 'text-starlight');
-        }
-      }
-
-      showToast(isUiVisible ? "// UI DIRECTORY & TYPOGRAPHY REVEALED" : "// OBSERVATION MODE: COSMIC VOID");
-    }
-
-    // Observation Mode (Pure Cosmic Background Mode)
-    function toggleObservationMode() {
-      toggleUiVisibility();
-    }
-
-    // Synchronized Anticlockwise Nebula Drift Status
-    function toggleRotationDirection() {
-      if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
-      showToast("// NEBULA MOTION: SYNCHRONIZED ANTICLOCKWISE DRIFT");
-    }
-
-    // Broadcast Form Handler
-    function handleBroadcast(e) {
-      e.preventDefault();
-      cosmicAudio.playClickChime();
-
-      const name = document.getElementById('broadcast-name').value;
-      const transport = document.getElementById('broadcast-transport').value;
-      const category = document.getElementById('broadcast-category').value;
-      const pkg = document.getElementById('broadcast-pkg').value;
-      const desc = document.getElementById('broadcast-desc').value;
-
-      const newProbe = {
-        id: `custom-${Date.now()}`,
-        name: name,
-        category: category,
-        categoryLabel: category.toUpperCase(),
-        icon: "radio",
-        status: "ACTIVE // 99.9% SIGNAL",
-        statusColor: "signal-green",
-        spec: "MCP/2024-11-05",
-        transport: transport,
-        toolsCount: 3,
-        resourcesCount: 1,
-        tools: ["custom_action", "status_ping", "execute"],
-        description: desc,
-        command: pkg,
-        config: {
-          mcpServers: {
-            [name.toLowerCase().replace(/[^a-z0-9]/g, '-')]: {
-              command: pkg.split(' ')[0],
-              args: pkg.split(' ').slice(1)
-            }
-          }
-        }
-      };
-
-      MCP_PROBES.unshift(newProbe);
-      renderProbeCards();
-      closeModal('transmit-modal');
-      e.target.reset();
-
-      showToast(`// NEW BEACON BROADCASTED: ${name}`);
-    }
-
-    // Live UTC Clock updater
-    function startUtcClock() {
-      const clockEl = document.getElementById('utc-clock');
-      function update() {
-        const now = new Date();
-        const h = String(now.getUTCHours()).padStart(2, '0');
-        const m = String(now.getUTCMinutes()).padStart(2, '0');
-        const s = String(now.getUTCSeconds()).padStart(2, '0');
-        if (clockEl) clockEl.textContent = `${h}:${m}:${s} UTC`;
-      }
-      update();
-      setInterval(update, 1000);
+    function onWheelScroll(e) {
+      if (!introComplete) return;
+      wheelScrollAccumulator += e.deltaY * 0.0022;
+      wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
+      const maxScroll = Math.max(window.innerHeight * 0.9, 350);
+      window.scrollTo({ top: wheelScrollAccumulator * maxScroll, behavior: 'auto' });
+      updateScrollMorph();
     }
 
     // ----------------------------------------------------
-    // 5. APPLICATION INITIALIZATION & EVENT BINDINGS
+    // 5. APPLICATION INITIALIZATION & MAKESHIFT NAV
     // ----------------------------------------------------
     function initApp() {
-      // 1. Start 3D Scene
+      // 1. Initialize Cosmic Three.js Scene
       initCosmicScene();
 
-      // 2. Render Initial MCP Cards
-      renderProbeCards();
+      // 2. Initialize Generative Audio Engine
+      cosmicAudio = new CosmicAudioEngine();
 
-      // 3. Start Telemetry Clock
-      startUtcClock();
-
-      // 4. Audio Toggle Event
-      const audioBtn = document.getElementById('audio-toggle');
-      const audioIndicator = document.getElementById('audio-indicator');
-      const audioLabel = document.getElementById('audio-label');
-      const audioBadge = document.getElementById('audio-badge');
-
-      audioBtn.addEventListener('click', () => {
-        const isPlaying = cosmicAudio.toggle();
-        if (isPlaying) {
-          audioIndicator.classList.add('eq-playing');
-          audioLabel.textContent = 'Sound: Ambient Drift';
-          audioLabel.classList.add('text-starlight');
-          audioBadge.classList.remove('bg-slate-600');
-          audioBadge.classList.add('bg-starlight', 'shadow-[0_0_8px_#E8D5B5]');
-          showToast("// PROCEDURAL AMBIENT DRIFT ENGAGED");
-        } else {
-          audioIndicator.classList.remove('eq-playing');
-          audioLabel.textContent = 'Sound on / Ambient Drift';
-          audioLabel.classList.remove('text-starlight');
-          audioBadge.classList.add('bg-slate-600');
-          audioBadge.classList.remove('bg-starlight', 'shadow-[0_0_8px_#E8D5B5]');
-          showToast("// AUDIO TELEMETRY SILENCED");
-        }
-      });
-
-      // 5. UI Visibility Toggle (Show / Hide text blocks and directory)
-      const uiVisibilityBtn = document.getElementById('ui-visibility-toggle');
-      if (uiVisibilityBtn) {
-        uiVisibilityBtn.addEventListener('click', () => toggleUiVisibility());
-      }
-
-      // 6. Transmit Signal Button
-      const transmitBtn = document.getElementById('transmit-btn');
-      if (transmitBtn) {
-        transmitBtn.addEventListener('click', () => {
-          cosmicAudio.playClickChime();
-          openModal('transmit-modal');
-        });
-      }
-
-      // 7. Search Input Listener
-      const searchInput = document.getElementById('search-input');
-      const clearSearchBtn = document.getElementById('clear-search');
-      if (searchInput && clearSearchBtn) {
-        searchInput.addEventListener('input', (e) => {
-          searchQuery = e.target.value;
-          if (searchQuery.length > 0) {
-            clearSearchBtn.classList.remove('hidden');
-          } else {
-            clearSearchBtn.classList.add('hidden');
-          }
-          renderProbeCards();
-        });
-
-        clearSearchBtn.addEventListener('click', () => {
-          searchInput.value = '';
-          searchQuery = '';
-          clearSearchBtn.classList.add('hidden');
-          renderProbeCards();
-        });
-      }
-
-      // 8. Filter Pills
-      document.querySelectorAll('.filter-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-          cosmicAudio.playClickChime();
-          document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active', 'border-starlight/40', 'text-starlight'));
-          pill.classList.add('active', 'border-starlight/40', 'text-starlight');
-          currentCategory = pill.dataset.category;
-          renderProbeCards();
-        });
-      });
-
-      // 8b. Scroll & Gesture Driven Apple-Font "NOVA" Morphing Engine
-      function syncConstellationBtn() {
-        const constellationBtn = document.getElementById('constellation-toggle');
-        const constellationText = document.getElementById('constellation-text');
-        const isAssembled = targetMorph > 0.5;
-        const isSmallScreen = window.innerWidth < 640;
-        if (constellationText) {
-          if (isSmallScreen) {
-            constellationText.textContent = isAssembled ? 'GALAXY' : 'NOVA';
-          } else {
-            constellationText.textContent = isAssembled ? 'SPIRAL GALAXY' : 'NOVA LOCK';
-          }
-        }
-        if (constellationBtn) {
-          if (isAssembled) {
-            constellationBtn.classList.add('border-starlight/60', 'bg-starlight/20', 'text-white');
-            constellationBtn.classList.remove('border-starlight/40', 'bg-starlight/10', 'text-starlight');
-          } else {
-            constellationBtn.classList.remove('border-starlight/60', 'bg-starlight/20', 'text-white');
-            constellationBtn.classList.add('border-starlight/40', 'bg-starlight/10', 'text-starlight');
-          }
-        }
-      }
-
-      function updateScrollMorph() {
-        if (!introComplete) return;
-        const pageScrollY = window.scrollY || window.pageYOffset || 0;
-        const scrollProgress = THREE.MathUtils.clamp(pageScrollY / 380.0, 0.0, 1.0);
-        targetMorph = THREE.MathUtils.clamp(Math.max(scrollProgress, wheelScrollAccumulator), 0.0, 1.0);
-        syncConstellationBtn();
-      }
-
-      function onWheelScroll(e) {
-        if (!introComplete) return;
-        if (!isUiVisible || window.scrollY <= 15) {
-          wheelScrollAccumulator += e.deltaY * 0.0024;
-          wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
-          updateScrollMorph();
-        }
-      }
-
+      // 3. Scroll & Wheel listeners
       window.addEventListener('scroll', updateScrollMorph, { passive: true });
       window.addEventListener('wheel', onWheelScroll, { passive: true });
 
-      function toggleConstellation() {
-        cosmicAudio.playClickChime();
-        if (targetMorph > 0.5) {
+      // 4. Top-Left 3-Line Hamburger Menu
+      const hamburgerBtn = document.getElementById('nav-hamburger-btn');
+      if (hamburgerBtn) {
+        hamburgerBtn.addEventListener('click', () => {
+          if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           targetMorph = 0.0;
           wheelScrollAccumulator = 0.0;
-        } else {
-          targetMorph = 1.0;
-          wheelScrollAccumulator = 1.0;
-        }
-        syncConstellationBtn();
-        showToast(targetMorph > 0.5 ? "// CONSTELLATION ASSEMBLED: NOVA (APPLE TYPOGRAPHY)" : "// STARS DISPERSED INTO SPIRAL GALAXY");
+        });
       }
 
-      const constellationBtn = document.getElementById('constellation-toggle');
-      if (constellationBtn) {
-        constellationBtn.addEventListener('click', toggleConstellation);
+      // 5. Top-Right Crescent Moon (Toggles Generative Sound & Starlight Mood)
+      const moonBtn = document.getElementById('nav-moon-btn');
+      if (moonBtn) {
+        moonBtn.addEventListener('click', () => {
+          if (cosmicAudio) {
+            const isPlaying = cosmicAudio.toggle();
+            if (isPlaying) {
+              moonBtn.classList.add('border-starlight/60', 'bg-starlight/20', 'text-white', 'shadow-[0_0_15px_rgba(232,213,181,0.25)]');
+            } else {
+              moonBtn.classList.remove('border-starlight/60', 'bg-starlight/20', 'text-white', 'shadow-[0_0_15px_rgba(232,213,181,0.25)]');
+            }
+          }
+        });
       }
 
-      // Replay Intro Button Listener
-      const replayBtn = document.getElementById('replay-intro-btn');
-      if (replayBtn) {
-        replayBtn.addEventListener('click', replayIntroAnimation);
-      }
-
-      // 9. Keyboard Shortcuts
+      // 6. Keyboard Shortcuts
       window.addEventListener('keydown', (e) => {
-        // Space or M key toggles audio (when not typing in an input)
-        if ((e.code === 'Space' || e.key === 'm' || e.key === 'M') && !e.target.matches('input, textarea')) {
+        // Space or M key toggles audio via moon button
+        if (e.code === 'Space' || e.key === 'm' || e.key === 'M') {
           e.preventDefault();
-          audioBtn.click();
+          if (moonBtn) moonBtn.click();
         }
         // R key replays the 3D sand grain fall & supernova intro
-        if ((e.key === 'r' || e.key === 'R') && !e.target.matches('input, textarea')) {
+        if (e.key === 'r' || e.key === 'R') {
           replayIntroAnimation();
-        }
-        // D key status reminder (Synchronized Anticlockwise)
-        if ((e.key === 'd' || e.key === 'D') && !e.target.matches('input, textarea')) {
-          toggleRotationDirection();
-        }
-        // C key toggles ASTRA Constellation vs Free Nebula Drift
-        if ((e.key === 'c' || e.key === 'C') && !e.target.matches('input, textarea')) {
-          toggleConstellation();
-        }
-        // U key toggles UI visibility
-        if ((e.key === 'u' || e.key === 'U' || e.key === 'v' || e.key === 'V') && !e.target.matches('input, textarea')) {
-          toggleUiVisibility();
-        }
-        // ⌘K or Ctrl+K for command palette
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-          e.preventDefault();
-          const modal = document.getElementById('command-modal');
-          if (modal.classList.contains('hidden')) {
-            openCommandPalette();
-          } else {
-            closeCommandPalette();
-          }
-        }
-        // Escape closes any open modal
-        if (e.key === 'Escape') {
-          closeCommandPalette();
-          closeModal('inspect-modal');
-          closeModal('transmit-modal');
-          closeModal('manifesto-modal');
-          closeModal('telemetry-modal');
         }
       });
 
-      // 10. Initialize Lucide Icons
+      // 7. Initialize Lucide Icons
       if (window.lucide) {
         window.lucide.createIcons();
       }
