@@ -1880,11 +1880,21 @@
       const cursorVx = isMouseActive ? cursor3D.x - prevCursor3D.x : 0;
       const cursorVy = isMouseActive ? cursor3D.y - prevCursor3D.y : 0;
       const cursorSpeed = Math.hypot(cursorVx, cursorVy);
-      if (isMouseActive) prevCursor3D.copy(cursor3D);
 
-      // 2. Laminar Fluid Physics & Seamless Constant Galactic Spin
-      const radius = 3.4;
-      const radiusSq = radius * radius;
+      // Swept mouse cursor hitbox parameters
+      const cursorHitboxRadius = 0.45;
+      const maxStarHitboxRadius = 0.45;
+      const maxHitDist = cursorHitboxRadius + maxStarHitboxRadius; // ~0.90
+      const segX = isMouseActive ? cursor3D.x - prevCursor3D.x : 0;
+      const segY = isMouseActive ? cursor3D.y - prevCursor3D.y : 0;
+      const segLenSq = segX * segX + segY * segY;
+
+      // Tight bounding box for instant spatial rejection of stars far from mouse
+      const minHitX = Math.min(cursor3D.x, prevCursor3D.x) - maxHitDist;
+      const maxHitX = Math.max(cursor3D.x, prevCursor3D.x) + maxHitDist;
+      const minHitY = Math.min(cursor3D.y, prevCursor3D.y) - maxHitDist;
+      const maxHitY = Math.max(cursor3D.y, prevCursor3D.y) + maxHitDist;
+
       const posAttr = galaxyMesh.geometry.attributes.position;
       const posArr = posAttr.array;
 
@@ -1906,11 +1916,6 @@
           }
         }
       }
-
-      const stickDirX = cursorSpeed > 0.0001 ? cursorVx / cursorSpeed : 0;
-      const stickDirY = cursorSpeed > 0.0001 ? cursorVy / cursorSpeed : 0;
-      const perpX = -stickDirY;
-      const perpY = stickDirX;
 
       const isMorphing = morphProgress > 0.0005 && novaTargets;
 
@@ -1944,35 +1949,88 @@
           finalZ = THREE.MathUtils.lerp(hz, nz, p);
         }
 
-        let px = finalX + fluidOffsets[i3 + 0];
-        let py = finalY + fluidOffsets[i3 + 1];
+        const px = finalX + fluidOffsets[i3 + 0];
+        const py = finalY + fluidOffsets[i3 + 1];
 
-        const dx = px - cursor3D.x;
-        const dy = py - cursor3D.y;
+        // ----------------------------------------------------
+        // PHYSICAL HITBOX COLLISION: MOUSE VS INDIVIDUAL STARS
+        // Touching a star imparts collision impulse; stars drift slowly with real celestial inertia
+        // ----------------------------------------------------
+        if (isMouseActive && px >= minHitX && px <= maxHitX && py >= minHitY && py <= maxHitY) {
+          // Each star has its own hitbox scaled by its physical star size
+          const starHitboxRadius = 0.12 + (sizes[i] / 12.0) * 0.33; // 0.15 to 0.45 units
+          const hitDist = cursorHitboxRadius + starHitboxRadius;    // 0.60 to 0.90 units
 
-        if (Math.abs(dx) < radius && Math.abs(dy) < radius) {
+          // Find closest point along swept cursor stroke (capsule collision prevents tunneling)
+          let closestX = cursor3D.x;
+          let closestY = cursor3D.y;
+          if (segLenSq > 0.0001) {
+            const t = THREE.MathUtils.clamp(((px - prevCursor3D.x) * segX + (py - prevCursor3D.y) * segY) / segLenSq, 0.0, 1.0);
+            closestX = prevCursor3D.x + t * segX;
+            closestY = prevCursor3D.y + t * segY;
+          }
+
+          const dx = px - closestX;
+          const dy = py - closestY;
           const distSq = dx * dx + dy * dy;
-          if (distSq < radiusSq) {
-            const dist = Math.sqrt(distSq) + 0.001;
-            const t = 1.0 - dist / radius;
-            const factor = t * t * (3.0 - 2.0 * t);
 
-            const side = dx * perpX + dy * perpY;
-            const sideSign = side >= 0 ? 1.0 : -1.0;
+          if (distSq < hitDist * hitDist) {
+            const dist = Math.sqrt(distSq);
+            let nx, ny;
+            if (dist > 0.001) {
+              nx = dx / dist;
+              ny = dy / dist;
+            } else if (segLenSq > 0.0001) {
+              const sLen = Math.sqrt(segLenSq);
+              nx = -segY / sLen;
+              ny = segX / sLen;
+            } else {
+              const a = Math.random() * Math.PI * 2;
+              nx = Math.cos(a);
+              ny = Math.sin(a);
+            }
 
-            const lateralMag = factor * 0.026 * Math.min(cursorSpeed * 0.22 + 0.35, 0.85);
-            const radialMag = factor * factor * 0.016;
+            const overlap = hitDist - dist;
+            // Celestial mass: larger stars have greater inertia and resist acceleration
+            const starMass = 1.0 + (sizes[i] / 12.0) * 2.4; // 1.2 to 3.4
 
-            velocities[i3 + 0] += perpX * sideSign * lateralMag + (dx / dist) * radialMag;
-            velocities[i3 + 1] += perpY * sideSign * lateralMag + (dy / dist) * radialMag;
-            velocities[i3 + 2] += (Math.random() - 0.5) * factor * 0.010;
+            // 1. Contact normal impulse: pushes star away from mouse contact point
+            const normalImpulse = (0.010 + (overlap / hitDist) * 0.026) / starMass;
+
+            // 2. Cursor momentum transfer: moving cursor knocks the star along motion vector
+            const momentumImpulse = Math.min(cursorSpeed * 0.32, 0.038) / starMass;
+            const strokeDirX = cursorSpeed > 0.0001 ? cursorVx / cursorSpeed : 0;
+            const strokeDirY = cursorSpeed > 0.0001 ? cursorVy / cursorSpeed : 0;
+
+            // 3. Subtle 3D depth impulse
+            const depthImpulse = (Math.random() - 0.5) * 0.012 / starMass;
+
+            velocities[i3 + 0] += nx * normalImpulse + strokeDirX * momentumImpulse;
+            velocities[i3 + 1] += ny * normalImpulse + strokeDirY * momentumImpulse;
+            velocities[i3 + 2] += depthImpulse;
+
+            // Soft push separation so cursor does not remain buried inside star
+            fluidOffsets[i3 + 0] += nx * overlap * 0.14;
+            fluidOffsets[i3 + 1] += ny * overlap * 0.14;
+
+            // Limit speed so celestial objects always move slowly and majestically
+            const curSpeed = Math.hypot(velocities[i3 + 0], velocities[i3 + 1]);
+            const maxCelestialSpeed = 0.055 / Math.sqrt(starMass);
+            if (curSpeed > maxCelestialSpeed) {
+              const s = maxCelestialSpeed / curSpeed;
+              velocities[i3 + 0] *= s;
+              velocities[i3 + 1] *= s;
+            }
           }
         }
 
-        // Fluid displacement restoring spring & damping
-        velocities[i3 + 0] = (velocities[i3 + 0] - fluidOffsets[i3 + 0] * 0.06) * 0.88;
-        velocities[i3 + 1] = (velocities[i3 + 1] - fluidOffsets[i3 + 1] * 0.06) * 0.88;
-        velocities[i3 + 2] = (velocities[i3 + 2] - fluidOffsets[i3 + 2] * 0.06) * 0.88;
+        // ----------------------------------------------------
+        // CELESTIAL GRAVITATIONAL RESTORING TETHER
+        // Slowly and gracefully returns star back to original position
+        // ----------------------------------------------------
+        velocities[i3 + 0] = (velocities[i3 + 0] - fluidOffsets[i3 + 0] * 0.0055) * 0.935;
+        velocities[i3 + 1] = (velocities[i3 + 1] - fluidOffsets[i3 + 1] * 0.0055) * 0.935;
+        velocities[i3 + 2] = (velocities[i3 + 2] - fluidOffsets[i3 + 2] * 0.0055) * 0.935;
 
         fluidOffsets[i3 + 0] += velocities[i3 + 0];
         fluidOffsets[i3 + 1] += velocities[i3 + 1];
@@ -1982,6 +2040,8 @@
         posArr[i3 + 1] = finalY + fluidOffsets[i3 + 1];
         posArr[i3 + 2] = finalZ + fluidOffsets[i3 + 2];
       }
+
+      if (isMouseActive) prevCursor3D.copy(cursor3D);
 
       posAttr.needsUpdate = true;
 
