@@ -1585,6 +1585,7 @@
 
       starBedMesh = new THREE.Points(starBedGeo, starBedMat);
       starBedMesh.frustumCulled = false;
+      starBedMesh.visible = false;
       scene.add(starBedMesh);
 
       layoutStarBed();
@@ -1984,27 +1985,30 @@
 
       // ----------------------------------------------------
       // BED OF STARS AT THE BOTTOM OF THE SCREEN
-      // Pure, serene celestial bed of stars: no physics, no mouse reactions
+      // Shown ONLY when scrolled to NOVA (no physics, no mouse reactions)
       // ----------------------------------------------------
       if (starBedMesh) {
-        if (!introComplete) {
-          // Blooms in during supernova explosion phase (1.9s to 3.4s)
-          const introT = elapsedTime - introStartTime;
-          if (introT >= 1.9 && introT < 3.4) {
-            const explodeP = (introT - 1.9) / 1.5;
+        if (introComplete && morphProgress > 0.02) {
+          // Smoothly blooms in as you scroll to NOVA
+          const rawP = THREE.MathUtils.clamp((morphProgress - 0.10) / 0.65, 0.0, 1.0);
+          const bedAlpha = rawP * rawP * (3.0 - 2.0 * rawP); // smoothstep curve
+
+          if (bedAlpha > 0.001) {
             starBedMesh.visible = true;
             if (starBedMesh.material.uniforms) {
               starBedMesh.material.uniforms.uTime.value = elapsedTime;
-              starBedMesh.material.uniforms.uMorph.value = THREE.MathUtils.clamp(explodeP * 1.5, 0.0, 1.0);
+              starBedMesh.material.uniforms.uMorph.value = bedAlpha;
             }
           } else {
             starBedMesh.visible = false;
+            if (starBedMesh.material.uniforms) {
+              starBedMesh.material.uniforms.uMorph.value = 0.0;
+            }
           }
         } else {
-          starBedMesh.visible = true;
+          starBedMesh.visible = false;
           if (starBedMesh.material.uniforms) {
-            starBedMesh.material.uniforms.uTime.value = elapsedTime;
-            starBedMesh.material.uniforms.uMorph.value = 1.0;
+            starBedMesh.material.uniforms.uMorph.value = 0.0;
           }
         }
       }
