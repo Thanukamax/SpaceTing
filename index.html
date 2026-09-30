@@ -733,27 +733,50 @@
     let wheelScrollAccumulator = 0.0;
 
     // ====================================================
-    // FISH TANK LIQUID STAR SIMULATION SYSTEM
+    // BED OF STARS AT THE BOTTOM OF THE SCREEN
+    // Pure celestial star bed: static layout, no mouse reaction, no physics
     // ====================================================
-    let tankStarMesh = null;
-    const tankStarCount = 2400;
-    const tankPositions = new Float32Array(tankStarCount * 3);
-    const tankColors = new Float32Array(tankStarCount * 3);
-    const tankSizes = new Float32Array(tankStarCount);
-    const tankTwinkles = new Float32Array(tankStarCount);
+    let starBedMesh = null;
+    const starBedCount = 2400;
+    const starBedPositions = new Float32Array(starBedCount * 3);
+    const starBedColors = new Float32Array(starBedCount * 3);
+    const starBedSizes = new Float32Array(starBedCount);
+    const starBedTwinkles = new Float32Array(starBedCount);
 
-    // Liquid physics state arrays
-    const tankVx = new Float32Array(tankStarCount);
-    const tankVy = new Float32Array(tankStarCount);
-    const tankVz = new Float32Array(tankStarCount);
-    const tankBuoyancy = new Float32Array(tankStarCount); // Buoyant tendency (0.0 to 1.0)
-    const tankTargetLayer = new Float32Array(tankStarCount); // Equilibrium depth ratio
-    const tankPhase = new Float32Array(tankStarCount);
+    const starBedRandsX = new Float32Array(starBedCount);
+    const starBedRandsY = new Float32Array(starBedCount);
+    const starBedRandsZ = new Float32Array(starBedCount);
+    for (let i = 0; i < starBedCount; i++) {
+      starBedRandsX[i] = Math.random();
+      starBedRandsY[i] = Math.random();
+      starBedRandsZ[i] = Math.random();
+    }
 
-    // Shallow-water wave surface heightfield (120 columns across tank width)
-    const TANK_WAVE_COLS = 120;
-    const tankWaveH = new Float32Array(TANK_WAVE_COLS);
-    const tankWaveV = new Float32Array(TANK_WAVE_COLS);
+    function layoutStarBed() {
+      if (!starBedMesh) return;
+      const camZ = typeof getResponsiveCamZ === 'function' ? getResponsiveCamZ() : 44.0;
+      const tanHalfFov = 0.4244748;
+      const visHalfH = camZ * tanHalfFov;
+      const aspect = (camera && camera.aspect) ? camera.aspect : (window.innerWidth / window.innerHeight);
+      const halfW = visHalfH * aspect * 1.15;
+      const bottomY = -visHalfH * 1.02; // Hugs bottom edge of screen
+      const topY = -visHalfH * 0.55;    // Upper threshold of the bed, comfortably below NOVA
+      const heightSpan = topY - bottomY;
+
+      const posArr = starBedMesh.geometry.attributes.position.array;
+      for (let i = 0; i < starBedCount; i++) {
+        const x = (starBedRandsX[i] - 0.5) * 2.0 * halfW;
+        // Natural distribution: denser towards bottom edge, feathering upward
+        const yFrac = Math.pow(starBedRandsY[i], 1.45);
+        const y = bottomY + yFrac * heightSpan;
+        const z = (starBedRandsZ[i] - 0.5) * 4.0;
+
+        posArr[i * 3 + 0] = x;
+        posArr[i * 3 + 1] = y;
+        posArr[i * 3 + 2] = z;
+      }
+      starBedMesh.geometry.attributes.position.needsUpdate = true;
+    }
 
     // Fluid cursor tracking in 3D galaxy plane
     const mouse2D = new THREE.Vector2(0, 0);
@@ -1448,49 +1471,26 @@
       starfieldMesh = new THREE.Points(bgGeo, bgMat);
       scene.add(starfieldMesh);
 
-// 6b. FISH TANK LIQUID STAR PARTICLE SYSTEM
-      const tankGeo = new THREE.BufferGeometry();
+      // 6b. BED OF STARS AT THE BOTTOM OF THE SCREEN
+      const starBedGeo = new THREE.BufferGeometry();
 
-      // Distribution matching NOVA: 80% tiny, 14% medium, 4.5% large, 1.5% mega-giants with spikes
-      for (let i = 0; i < tankStarCount; i++) {
-        // Initial distribution inside the fish tank: floor at y = -15.5, surface at y = -7.5
-        const normX = (Math.random() - 0.5) * 55.0;
-        const normY = -15.5 + Math.random() * 8.0;
-        const normZ = (Math.random() - 0.5) * 5.0;
-
-        tankPositions[i * 3 + 0] = normX;
-        tankPositions[i * 3 + 1] = normY;
-        tankPositions[i * 3 + 2] = normZ;
-
-        tankVx[i] = (Math.random() - 0.5) * 0.02;
-        tankVy[i] = (Math.random() - 0.5) * 0.02;
-        tankVz[i] = (Math.random() - 0.5) * 0.01;
-
-        // Star sizing & buoyancy matching NOVA
+      for (let i = 0; i < starBedCount; i++) {
+        // Size hierarchy matching NOVA: tiny stardust, medium stars, radiant stars, mega-giants
         const roll = Math.random();
         let starSize;
-        if (roll < 0.78) {
-          starSize = 0.95 + Math.random() * 1.35; // Tiny fluid stardust
-          tankBuoyancy[i] = 0.15 + Math.random() * 0.40; // Drifts through deep volume
-          tankTargetLayer[i] = Math.random() * 0.70; // Lower/mid layers
-        } else if (roll < 0.92) {
-          starSize = 2.6 + Math.random() * 2.4; // Medium liquid stars
-          tankBuoyancy[i] = 0.50 + Math.random() * 0.35; // Mid/upper fluid layers
-          tankTargetLayer[i] = 0.35 + Math.random() * 0.50;
-        } else if (roll < 0.98) {
-          starSize = 5.8 + Math.random() * 3.2; // Large radiant stars
-          tankBuoyancy[i] = 0.82 + Math.random() * 0.16; // Floats near surface
-          tankTargetLayer[i] = 0.75 + Math.random() * 0.22;
+        if (roll < 0.76) {
+          starSize = 1.0 + Math.random() * 1.4; // Delicate cosmic stardust
+        } else if (roll < 0.91) {
+          starSize = 2.8 + Math.random() * 2.2; // Medium stars
+        } else if (roll < 0.97) {
+          starSize = 6.0 + Math.random() * 3.0; // Large radiant stars
         } else {
-          starSize = 10.5 + Math.random() * 3.0; // Mega-giants with diffraction spikes
-          tankBuoyancy[i] = 0.96 + Math.random() * 0.04; // Rides the water surface waves!
-          tankTargetLayer[i] = 0.92 + Math.random() * 0.08;
+          starSize = 10.5 + Math.random() * 4.0; // Mega-giants with 4-point cross diffraction spikes
         }
-        tankSizes[i] = starSize;
-        tankTwinkles[i] = Math.random() * 100.0;
-        tankPhase[i] = Math.random() * Math.PI * 2;
+        starBedSizes[i] = starSize;
+        starBedTwinkles[i] = Math.random() * 100.0;
 
-        // Rich colors from colorPalette: cyan, blue, purple, red, orange, and core white
+        // Rich colors from NOVA colorPalette: cyan, blue, purple, red, orange, and core white
         let col;
         const cRoll = Math.random();
         if (cRoll < 0.12) {
@@ -1505,23 +1505,23 @@
           col = colorPalette.red[Math.floor(Math.random() * colorPalette.red.length)];
         }
 
-        tankColors[i * 3 + 0] = col.r;
-        tankColors[i * 3 + 1] = col.g;
-        tankColors[i * 3 + 2] = col.b;
+        starBedColors[i * 3 + 0] = col.r;
+        starBedColors[i * 3 + 1] = col.g;
+        starBedColors[i * 3 + 2] = col.b;
       }
 
-      const tPosAttr = new THREE.BufferAttribute(tankPositions, 3).setUsage(THREE.DynamicDrawUsage);
-      const tColAttr = new THREE.BufferAttribute(tankColors, 3).setUsage(THREE.DynamicDrawUsage);
-      const tSizeAttr = new THREE.BufferAttribute(tankSizes, 1).setUsage(THREE.DynamicDrawUsage);
-      const tTwinkleAttr = new THREE.BufferAttribute(tankTwinkles, 1).setUsage(THREE.DynamicDrawUsage);
+      const bPosAttr = new THREE.BufferAttribute(starBedPositions, 3).setUsage(THREE.DynamicDrawUsage);
+      const bColAttr = new THREE.BufferAttribute(starBedColors, 3);
+      const bSizeAttr = new THREE.BufferAttribute(starBedSizes, 1);
+      const bTwinkleAttr = new THREE.BufferAttribute(starBedTwinkles, 1);
 
-      tankGeo.setAttribute('position', tPosAttr);
-      tankGeo.setAttribute('aColor', tColAttr);
-      tankGeo.setAttribute('aSize', tSizeAttr);
-      tankGeo.setAttribute('aTwinkle', tTwinkleAttr);
+      starBedGeo.setAttribute('position', bPosAttr);
+      starBedGeo.setAttribute('aColor', bColAttr);
+      starBedGeo.setAttribute('aSize', bSizeAttr);
+      starBedGeo.setAttribute('aTwinkle', bTwinkleAttr);
 
       // Exact high-fidelity shader matching NOVA (core, glow, spikes, twinkling, additive blending)
-      const tankMat = new THREE.ShaderMaterial({
+      const starBedMat = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
           uMorph: { value: 0.0 }
@@ -1546,7 +1546,6 @@
             float tw = 0.82 + 0.18 * sin(uTime * twSpeed + aTwinkle);
             float sizeBoost = mix(1.0, 1.35, clamp(aSize / 15.0, 0.0, 1.0));
 
-            // Fades in smoothly as user scrolls towards NOVA
             vAlpha = tw * uMorph * sizeBoost;
             gl_PointSize = aSize * (150.0 / -mvPos.z) * tw;
           }
@@ -1584,9 +1583,11 @@
         depthWrite: false
       });
 
-      tankStarMesh = new THREE.Points(tankGeo, tankMat);
-      tankStarMesh.frustumCulled = false; // Never cull full-screen dynamic particles!
-      scene.add(tankStarMesh);
+      starBedMesh = new THREE.Points(starBedGeo, starBedMat);
+      starBedMesh.frustumCulled = false;
+      scene.add(starBedMesh);
+
+      layoutStarBed();
 
       // Event Listeners for fluid cursor interaction & responsive layout
       window.addEventListener('resize', onWindowResize);
@@ -1610,6 +1611,7 @@
         novaTargets = generateNovaTargets(starCount);
       }
 
+      layoutStarBed();
       if (typeof syncConstellationBtn === 'function') syncConstellationBtn();
       const uiText = document.getElementById('ui-visibility-text');
       if (uiText) {
@@ -1980,171 +1982,30 @@
         galaxyCoreMesh.material.opacity = 0.85 * (1.0 - morphProgress * 0.50);
       }
 
-// ----------------------------------------------------
-      // FISH TANK LIQUID PHYSICS SIMULATION
-      // Stars simulated as water sloshing in an aquarium
       // ----------------------------------------------------
-      if (tankStarMesh && introComplete) {
-        // Tank geometry in camera world coordinates
-        const visHalfH = camera.position.z * 0.4244748;
-        const tankLeftX = -visHalfH * camera.aspect * 0.95;
-        const tankRightX = visHalfH * camera.aspect * 0.95;
-        const tankFloorY = -visHalfH * 0.88; // Bottom of tank
-        const tankEquilSurfaceY = -visHalfH * 0.44; // Surface equilibrium line
-        const tankHeight = tankEquilSurfaceY - tankFloorY;
-        const tankSpanX = tankRightX - tankLeftX;
-
-        // 1. SHALLOW-WATER 1D SURFACE WAVE FIELD (Sloshing & Wall Reflections)
-        // Wave speed c=0.28, coupling k=0.12, damping=0.982
-        for (let w = 0; w < TANK_WAVE_COLS; w++) {
-          const leftH = w > 0 ? tankWaveH[w - 1] : tankWaveH[1]; // Neumann wall reflection (slosh bounce!)
-          const rightH = w < TANK_WAVE_COLS - 1 ? tankWaveH[w + 1] : tankWaveH[TANK_WAVE_COLS - 2];
-          const laplacian = leftH + rightH - 2.0 * tankWaveH[w];
-          const restoring = -0.016 * tankWaveH[w]; // Gravity restoring force
-          tankWaveV[w] = (tankWaveV[w] + laplacian * 0.14 + restoring) * 0.980;
-        }
-        for (let w = 0; w < TANK_WAVE_COLS; w++) {
-          tankWaveH[w] += tankWaveV[w];
-        }
-
-        // Ambient cosmic tidal slosh: gentle rhythmic rocking against tank walls
-        const ambientRock = Math.sin(elapsedTime * 1.35) * 0.08 + Math.cos(elapsedTime * 0.8) * 0.04;
-        tankWaveH[0] += ambientRock * 0.08;
-        tankWaveH[TANK_WAVE_COLS - 1] -= ambientRock * 0.08;
-
-        // Cursor interaction: splashing and sloshing the water with mouse
-        if (isMouseActive && cursor3D.x > tankLeftX && cursor3D.x < tankRightX) {
-          const colIdx = Math.floor(((cursor3D.x - tankLeftX) / tankSpanX) * TANK_WAVE_COLS);
-          if (colIdx >= 0 && colIdx < TANK_WAVE_COLS) {
-            const distToSurface = Math.abs(cursor3D.y - (tankEquilSurfaceY + tankWaveH[colIdx]));
-            if (distToSurface < 3.5) {
-              const splash = THREE.MathUtils.clamp(-cursorSpeed * 0.45, -0.6, 0.6);
-              tankWaveV[colIdx] += splash;
-              if (colIdx > 0) tankWaveV[colIdx - 1] += splash * 0.5;
-              if (colIdx < TANK_WAVE_COLS - 1) tankWaveV[colIdx + 1] += splash * 0.5;
+      // BED OF STARS AT THE BOTTOM OF THE SCREEN
+      // Pure, serene celestial bed of stars: no physics, no mouse reactions
+      // ----------------------------------------------------
+      if (starBedMesh) {
+        if (!introComplete) {
+          // Blooms in during supernova explosion phase (1.9s to 3.4s)
+          const introT = elapsedTime - introStartTime;
+          if (introT >= 1.9 && introT < 3.4) {
+            const explodeP = (introT - 1.9) / 1.5;
+            starBedMesh.visible = true;
+            if (starBedMesh.material.uniforms) {
+              starBedMesh.material.uniforms.uTime.value = elapsedTime;
+              starBedMesh.material.uniforms.uMorph.value = THREE.MathUtils.clamp(explodeP * 1.5, 0.0, 1.0);
             }
+          } else {
+            starBedMesh.visible = false;
           }
-        }
-
-        // Function to sample surface wave height at any X coordinate
-        function getSurfaceHeight(wx) {
-          const u = THREE.MathUtils.clamp((wx - tankLeftX) / tankSpanX, 0.0, 1.0);
-          const fIdx = u * (TANK_WAVE_COLS - 1);
-          const i0 = Math.floor(fIdx);
-          const i1 = Math.min(i0 + 1, TANK_WAVE_COLS - 1);
-          const frac = fIdx - i0;
-          return tankEquilSurfaceY + THREE.MathUtils.lerp(tankWaveH[i0], tankWaveH[i1], frac);
-        }
-
-        function getSurfaceVel(wx) {
-          const u = THREE.MathUtils.clamp((wx - tankLeftX) / tankSpanX, 0.0, 1.0);
-          const idx = Math.round(u * (TANK_WAVE_COLS - 1));
-          return tankWaveV[THREE.MathUtils.clamp(idx, 0, TANK_WAVE_COLS - 1)];
-        }
-
-        // 2. LIQUID PARTICLES (STARS AS WATER MOLECULES)
-        const posArr = tankStarMesh.geometry.attributes.position.array;
-
-        for (let i = 0; i < tankStarCount; i++) {
-          const i3 = i * 3;
-          let px = posArr[i3 + 0];
-          let py = posArr[i3 + 1];
-          let pz = posArr[i3 + 2];
-
-          const surfY = getSurfaceHeight(px);
-          const surfV = getSurfaceVel(px);
-
-          // Fluid depth ratio: 0.0 at floor, 1.0 at water surface
-          const depthRatio = THREE.MathUtils.clamp((py - tankFloorY) / Math.max(surfY - tankFloorY, 0.1), 0.0, 1.0);
-          const normX = (px - tankLeftX) / tankSpanX; // 0.0 to 1.0 across tank
-
-          // (A) Hydrodynamic convection vortices inside the tank
-          // Two large circulatory cells that churn water upward in the center and down at walls
-          const vortX = Math.sin(normX * Math.PI * 2.0) * Math.cos(depthRatio * Math.PI) * 0.016;
-          const vortY = -Math.cos(normX * Math.PI * 2.0) * Math.sin(depthRatio * Math.PI) * 0.016;
-
-          // (B) Slosh lateral drift: surface waves push water back and forth horizontally
-          const sloshX = surfV * (0.3 + 0.7 * depthRatio) * 0.65;
-
-          // (C) Buoyancy vs Gravity:
-          // Buoyant stars rise toward the surface; denser stars settle toward target depth
-          const targetY = tankFloorY + tankTargetLayer[i] * (surfY - tankFloorY);
-          const buoyancyForce = (targetY - py) * (0.012 + 0.025 * tankBuoyancy[i]);
-
-          // (D) Wave vertical surging: water moves vertically with the surface waves
-          const waveSurgeY = surfV * depthRatio * 0.45;
-
-          // Apply forces to particle velocities
-          tankVx[i] += vortX + sloshX;
-          tankVy[i] += vortY + buoyancyForce + waveSurgeY;
-
-          // (E) Mouse fluid stirring: pushing water when cursor moves through liquid
-          if (isMouseActive) {
-            const mdx = px - cursor3D.x;
-            const mdy = py - cursor3D.y;
-            const mDistSq = mdx * mdx + mdy * mdy;
-            if (mDistSq < 16.0) {
-              const mDist = Math.sqrt(mDistSq) + 0.001;
-              const pushFactor = (1.0 - mDist / 4.0) * 0.035;
-              tankVx[i] += (cursorVx * 0.4 + (mdx / mDist) * 0.02) * pushFactor;
-              tankVy[i] += (cursorVy * 0.4 + (mdy / mDist) * 0.02) * pushFactor;
-            }
+        } else {
+          starBedMesh.visible = true;
+          if (starBedMesh.material.uniforms) {
+            starBedMesh.material.uniforms.uTime.value = elapsedTime;
+            starBedMesh.material.uniforms.uMorph.value = 1.0;
           }
-
-          // Viscous fluid drag (damping)
-          tankVx[i] *= 0.945;
-          tankVy[i] *= 0.945;
-          tankVz[i] *= 0.945;
-
-          // Integrate position
-          px += tankVx[i];
-          py += tankVy[i];
-          pz += tankVz[i];
-
-          // (F) SOLID BOUNDARY CONSTRAINTS (Fish Tank Glass Walls & Floor)
-          // 1. Floor collision: bounce with liquid friction
-          if (py < tankFloorY) {
-            py = tankFloorY;
-            tankVy[i] = Math.abs(tankVy[i]) * 0.25;
-            tankVx[i] *= 0.88;
-          }
-
-          // 2. Water surface boundary: buoyant stars float right on the meniscus!
-          const maxAllowedY = surfY + 0.15;
-          if (py > maxAllowedY) {
-            py = maxAllowedY;
-            tankVy[i] = -Math.abs(tankVy[i]) * 0.35; // Surface tension bounce
-          }
-
-          // 3. Left glass wall collision: bounce back into tank
-          if (px < tankLeftX) {
-            px = tankLeftX;
-            tankVx[i] = Math.abs(tankVx[i]) * 0.45;
-          }
-
-          // 4. Right glass wall collision: bounce back into tank
-          if (px > tankRightX) {
-            px = tankRightX;
-            tankVx[i] = -Math.abs(tankVx[i]) * 0.45;
-          }
-
-          // 5. Z depth boundary (aquarium front and back glass)
-          if (pz < -2.8) { pz = -2.8; tankVz[i] = Math.abs(tankVz[i]) * 0.5; }
-          if (pz > 2.8) { pz = 2.8; tankVz[i] = -Math.abs(tankVz[i]) * 0.5; }
-
-          posArr[i3 + 0] = px;
-          posArr[i3 + 1] = py;
-          posArr[i3 + 2] = pz;
-        }
-
-        tankStarMesh.geometry.attributes.position.needsUpdate = true;
-
-        // Smoothly fade in/out with scroll-driven morph progress
-        if (tankStarMesh.material.uniforms) {
-          tankStarMesh.material.uniforms.uTime.value = elapsedTime;
-          // Water becomes fully visible as you scroll to NOVA
-          const fluidOpacity = THREE.MathUtils.clamp((morphProgress - 0.15) / 0.65, 0.0, 1.0);
-          tankStarMesh.material.uniforms.uMorph.value = fluidOpacity;
         }
       }
 
@@ -2208,12 +2069,11 @@
         shockwaveMesh.material.opacity = 0;
         shockwaveMesh.scale.set(0.1, 0.1, 1);
       }
-      if (tankStarMesh && tankStarMesh.material.uniforms) {
-        tankStarMesh.material.uniforms.uMorph.value = 0.0;
-      }
-      for (let w = 0; w < TANK_WAVE_COLS; w++) {
-        tankWaveH[w] = 0;
-        tankWaveV[w] = 0;
+      if (starBedMesh) {
+        starBedMesh.visible = false;
+        if (starBedMesh.material.uniforms) {
+          starBedMesh.material.uniforms.uMorph.value = 0.0;
+        }
       }
 
       // Reset window scroll & hide makeshift navbar
