@@ -734,7 +734,7 @@
 
     // NOVA Drip Stars & Sea of Stars Simulation System
     let dripSeaMesh = null;
-    const dripCount = 3200;
+    const dripCount = 3600;
     let novaDripEmitters = null;
     const dripPositions = new Float32Array(dripCount * 3);
     const dripColors = new Float32Array(dripCount * 3);
@@ -1583,23 +1583,41 @@
           attribute float aAlpha;
           varying vec3 vColor;
           varying float vAlpha;
+          varying float vSize;
           void main() {
             vColor = aColor;
             vAlpha = aAlpha;
+            vSize = aSize;
             vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = aSize * (220.0 / -mvPos.z);
+            gl_PointSize = aSize * (180.0 / -mvPos.z);
             gl_Position = projectionMatrix * mvPos;
           }
         `,
         fragmentShader: `
           varying vec3 vColor;
           varying float vAlpha;
+          varying float vSize;
           void main() {
             vec2 coord = gl_PointCoord - vec2(0.5);
             float dist = length(coord);
             if (dist > 0.5) discard;
-            float strength = pow(1.0 - (dist * 2.0), 2.2);
-            gl_FragColor = vec4(vColor, strength * vAlpha);
+
+            float core = smoothstep(0.24, 0.0, dist);
+            float glow = exp(-dist * 8.5);
+            float edge = smoothstep(0.5, 0.12, dist);
+
+            float spike = 0.0;
+            if (vSize > 6.0) {
+              float spikeIntensity = clamp((vSize - 6.0) / 5.0, 0.0, 1.0);
+              float spikeX = exp(-abs(coord.x) * 32.0) * exp(-abs(coord.y) * 4.0);
+              float spikeY = exp(-abs(coord.y) * 32.0) * exp(-abs(coord.x) * 4.0);
+              spike = max(spikeX, spikeY) * 0.75 * spikeIntensity;
+            }
+
+            vec3 finalColor = mix(vColor, vec3(1.0, 1.0, 1.0), core * 0.95 + spike * 0.6);
+            float alpha = clamp((core * 0.92 + glow * 0.60 + spike) * edge * vAlpha, 0.0, 1.0);
+
+            gl_FragColor = vec4(finalColor, alpha);
           }
         `,
         transparent: true,
@@ -2007,81 +2025,120 @@
       // ----------------------------------------------------
       if (dripSeaMesh && novaDripEmitters && introComplete) {
         const bottomY = -camera.position.z * 0.4244748;
-        const seaSurfaceY = bottomY + 3.6;
-        const halfWidth = Math.abs(bottomY) * camera.aspect * 1.15;
+        const seaSurfaceY = bottomY + 4.8;
+        const halfWidth = Math.abs(bottomY) * camera.aspect * 1.25;
 
-        // Drip starts smoothly as NOVA assembles (full intensity at morphProgress >= 0.85)
-        const dripActive = morphProgress > 0.60;
-        const globalDripAlpha = THREE.MathUtils.clamp((morphProgress - 0.25) / 0.60, 0.0, 1.0);
+        // Smooth visibility ramp: starts gently at 15% morph, full radiant glory at >= 80%
+        const globalDripAlpha = THREE.MathUtils.clamp((morphProgress - 0.12) / 0.70, 0.0, 1.0);
+        const dripActive = morphProgress > 0.35;
 
+        // One-time initialization of the Sea of Stars bed (1,900 pre-seeded ocean stars)
+        if (!window._seaInitialized) {
+          window._seaInitialized = true;
+          for (let i = 0; i < 1900; i++) {
+            dripState[i] = 2; // Settled in sea
+            dripBaseX[i] = (Math.random() - 0.5) * halfWidth * 2.0;
+            dripBaseY[i] = bottomY + Math.random() * 4.2;
+            dripVx[i] = (Math.random() - 0.5) * 0.028;
+            dripPhase[i] = Math.random() * Math.PI * 2;
+            dripLife[i] = Math.random() * 20.0;
+            dripMaxLife[i] = 25.0 + Math.random() * 25.0;
+
+            dripPositions[i * 3 + 0] = dripBaseX[i];
+            dripPositions[i * 3 + 1] = dripBaseY[i];
+            dripPositions[i * 3 + 2] = (Math.random() - 0.5) * 3.5;
+
+            // Palette of starlight gold, celestial cyan, radiant white and amber
+            const rCol = Math.random();
+            if (rCol < 0.35) {
+              dripColors[i * 3 + 0] = 1.0; dripColors[i * 3 + 1] = 0.94; dripColors[i * 3 + 2] = 0.82; // Warm starlight gold
+            } else if (rCol < 0.60) {
+              dripColors[i * 3 + 0] = 0.45; dripColors[i * 3 + 1] = 0.78; dripColors[i * 3 + 2] = 1.0; // Celestial cyan
+            } else if (rCol < 0.85) {
+              dripColors[i * 3 + 0] = 1.0; dripColors[i * 3 + 1] = 0.98; dripColors[i * 3 + 2] = 0.95; // Core white
+            } else {
+              dripColors[i * 3 + 0] = 1.0; dripColors[i * 3 + 1] = 0.65; dripColors[i * 3 + 2] = 0.25; // Solar amber
+            }
+
+            dripSizes[i] = Math.random() < 0.15 ? (6.5 + Math.random() * 4.5) : (3.2 + Math.random() * 3.5);
+            dripAlphas[i] = 0.0;
+          }
+        }
+
+        // Active Cascading Drips from letter anchors
         if (dripActive) {
-          const spawnCount = Math.floor(THREE.MathUtils.lerp(1, 5, (morphProgress - 0.60) / 0.40));
+          const spawnCount = Math.floor(THREE.MathUtils.lerp(3, 14, (morphProgress - 0.35) / 0.65));
           for (let s = 0; s < spawnCount; s++) {
+            // Find an inactive or oldest falling/sea particle in the stream buffer (indices 1900 to 3599)
             let pIdx = -1;
-            for (let k = 0; k < dripCount; k++) {
+            for (let k = 1900; k < dripCount; k++) {
               if (dripState[k] === 0) { pIdx = k; break; }
             }
             if (pIdx === -1) {
-              pIdx = Math.floor(Math.random() * dripCount);
+              pIdx = 1900 + Math.floor(Math.random() * (dripCount - 1900));
             }
 
-            // Probability distribution: N (28%), O Dark Sun (24%), V Y-stem (24%), A (24%)
+            // Probability: N (26%), O Dark Sun (26%), V Y-stem (26%), A (22%)
             const rChoice = Math.random();
             let eType = 0;
-            if (rChoice < 0.14) eType = 0;       // N left line |
-            else if (rChoice < 0.28) eType = 1;  // N right line |
+            if (rChoice < 0.13) eType = 0;       // N left line |
+            else if (rChoice < 0.26) eType = 1;  // N right line |
             else if (rChoice < 0.52) eType = 2;  // O Dark Sun weeping arc
-            else if (rChoice < 0.76) eType = 3;  // V Y-stem apex
-            else if (rChoice < 0.88) eType = 4;  // A left foot /
+            else if (rChoice < 0.78) eType = 3;  // V Y-stem apex
+            else if (rChoice < 0.89) eType = 4;  // A left foot /
             else eType = 5;                      // A right foot \
 
             dripEmitterType[pIdx] = eType;
             dripState[pIdx] = 1; // Falling / dripping
             dripLife[pIdx] = 0;
-            dripMaxLife[pIdx] = 18.0 + Math.random() * 20.0;
+            dripMaxLife[pIdx] = 20.0 + Math.random() * 25.0;
 
-            let sx = 0, sy = 0, sz = (Math.random() - 0.5) * 1.2;
-            let cr = 0.95, cg = 0.88, cb = 0.75; // Starlight warm gold default
+            let sx = 0, sy = 0, sz = (Math.random() - 0.5) * 1.5;
+            let cr = 1.0, cg = 0.94, cb = 0.82; // Default radiant starlight gold
 
             if (eType === 0 && novaDripEmitters.nLeft) {
-              sx = novaDripEmitters.nLeft.x + (Math.random() - 0.5) * 0.14;
-              sy = novaDripEmitters.nLeft.y - 0.05;
-              dripVx[pIdx] = (Math.random() - 0.5) * 0.008;
+              // N: Left vertical line |
+              sx = novaDripEmitters.nLeft.x + (Math.random() - 0.5) * 0.16;
+              sy = novaDripEmitters.nLeft.y - 0.08;
+              dripVx[pIdx] = (Math.random() - 0.5) * 0.01;
             } else if (eType === 1 && novaDripEmitters.nRight) {
-              sx = novaDripEmitters.nRight.x + (Math.random() - 0.5) * 0.14;
-              sy = novaDripEmitters.nRight.y - 0.05;
-              dripVx[pIdx] = (Math.random() - 0.5) * 0.008;
+              // N: Right vertical line |
+              sx = novaDripEmitters.nRight.x + (Math.random() - 0.5) * 0.16;
+              sy = novaDripEmitters.nRight.y - 0.08;
+              dripVx[pIdx] = (Math.random() - 0.5) * 0.01;
             } else if (eType === 2 && novaDripEmitters.oArc && novaDripEmitters.oArc.length > 0) {
               // O: Darksun weeping eclipse from Dark Souls (bleeds downward across bottom arc)
               const pt = novaDripEmitters.oArc[Math.floor(Math.random() * novaDripEmitters.oArc.length)];
-              sx = pt.x + (Math.random() - 0.5) * 0.18;
-              sy = pt.y - 0.05;
+              sx = pt.x + (Math.random() - 0.5) * 0.20;
+              sy = pt.y - 0.08;
               const ox = novaDripEmitters.oCenter ? novaDripEmitters.oCenter.x : sx;
-              dripVx[pIdx] = (sx - ox) * 0.016 + (Math.random() - 0.5) * 0.012;
-              // Molten dark sun colors: blazing gold, amber, and twilight crimson
-              if (Math.random() < 0.5) { cr = 1.0; cg = 0.55; cb = 0.15; }
-              else if (Math.random() < 0.75) { cr = 1.0; cg = 0.32; cb = 0.28; }
-              else { cr = 0.75; cg = 0.45; cb = 0.95; }
+              dripVx[pIdx] = (sx - ox) * 0.022 + (Math.random() - 0.5) * 0.015;
+              // Molten dark sun eclipse colors: blazing gold, amber, and eclipse crimson
+              if (Math.random() < 0.45) { cr = 1.0; cg = 0.60; cb = 0.12; }
+              else if (Math.random() < 0.75) { cr = 1.0; cg = 0.30; cb = 0.25; }
+              else { cr = 0.85; cg = 0.50; cb = 1.0; }
             } else if (eType === 3 && novaDripEmitters.vApex) {
-              // V: Drips straight down like a needle, extending into a Y stem!
-              sx = novaDripEmitters.vApex.x + (Math.random() - 0.5) * 0.04;
-              sy = novaDripEmitters.vApex.y - 0.05;
+              // V: Drips straight down like a needle, extending into a capital Y stem!
+              sx = novaDripEmitters.vApex.x + (Math.random() - 0.5) * 0.045;
+              sy = novaDripEmitters.vApex.y - 0.08;
               dripVx[pIdx] = 0; // Pure straight downward stream!
-              cr = 1.0; cg = 0.98; cb = 0.95; // Blinding core white
+              cr = 1.0; cg = 1.0; cb = 1.0; // Blinding core white
             } else if (eType === 4 && novaDripEmitters.aLeft) {
-              sx = novaDripEmitters.aLeft.x + (Math.random() - 0.5) * 0.14;
-              sy = novaDripEmitters.aLeft.y - 0.05;
-              dripVx[pIdx] = -0.008 + (Math.random() - 0.5) * 0.006;
+              // A: Left diagonal foot /
+              sx = novaDripEmitters.aLeft.x + (Math.random() - 0.5) * 0.16;
+              sy = novaDripEmitters.aLeft.y - 0.08;
+              dripVx[pIdx] = -0.012 + (Math.random() - 0.5) * 0.008;
             } else if (eType === 5 && novaDripEmitters.aRight) {
-              sx = novaDripEmitters.aRight.x + (Math.random() - 0.5) * 0.14;
-              sy = novaDripEmitters.aRight.y - 0.05;
-              dripVx[pIdx] = 0.008 + (Math.random() - 0.5) * 0.006;
+              // A: Right diagonal foot \
+              sx = novaDripEmitters.aRight.x + (Math.random() - 0.5) * 0.16;
+              sy = novaDripEmitters.aRight.y - 0.08;
+              dripVx[pIdx] = 0.012 + (Math.random() - 0.5) * 0.008;
             }
 
-            dripVy[pIdx] = -0.048 - Math.random() * 0.052;
-            dripVz[pIdx] = (Math.random() - 0.5) * 0.012;
+            dripVy[pIdx] = -0.06 - Math.random() * 0.07;
+            dripVz[pIdx] = (Math.random() - 0.5) * 0.015;
             dripBaseX[pIdx] = sx;
-            dripBaseY[pIdx] = bottomY + Math.random() * 2.8;
+            dripBaseY[pIdx] = bottomY + Math.random() * 3.6;
 
             dripPositions[pIdx * 3 + 0] = sx;
             dripPositions[pIdx * 3 + 1] = sy;
@@ -2091,13 +2148,13 @@
             dripColors[pIdx * 3 + 1] = cg;
             dripColors[pIdx * 3 + 2] = cb;
 
-            // V stem drops are crystalline and prominent
-            dripSizes[pIdx] = eType === 3 ? (2.8 + Math.random() * 2.2) : (1.8 + Math.random() * 2.0);
-            dripAlphas[pIdx] = 0.88;
+            // Prominent visible star drops (V stem drops are thickest and brightest)
+            dripSizes[pIdx] = eType === 3 ? (5.5 + Math.random() * 4.5) : (3.5 + Math.random() * 4.0);
+            dripAlphas[pIdx] = 0.95;
           }
         }
 
-        // Simulate falling and sea wave motion
+        // Simulate falling drops and undulating sea wave physics
         for (let i = 0; i < dripCount; i++) {
           if (dripState[i] === 0) {
             dripAlphas[i] = 0.0;
@@ -2107,15 +2164,15 @@
           dripLife[i] += 0.016;
 
           if (dripState[i] === 1) {
-            // STATE 1: DRIPPING & FALLING
-            dripVy[i] -= 0.0024; // Cosmic gravitational acceleration
-            dripVy[i] = Math.max(dripVy[i], -0.28);
+            // --- STATE 1: FALLING STREAM DROPS ---
+            dripVy[i] -= 0.0028; // Cosmic gravity
+            dripVy[i] = Math.max(dripVy[i], -0.32);
 
             // V emitter stem stays needle-straight under the apex to visually form the Y
             if (dripEmitterType[i] === 3 && novaDripEmitters.vApex) {
-              dripPositions[i * 3 + 0] = novaDripEmitters.vApex.x + Math.sin(dripPositions[i * 3 + 1] * 0.4 + elapsedTime * 1.8) * 0.035;
+              dripPositions[i * 3 + 0] = novaDripEmitters.vApex.x + Math.sin(dripPositions[i * 3 + 1] * 0.4 + elapsedTime * 2.0) * 0.04;
             } else {
-              dripPositions[i * 3 + 0] += dripVx[i] + Math.sin(dripPositions[i * 3 + 1] * 0.35 + elapsedTime * 2.2 + dripPhase[i]) * 0.008;
+              dripPositions[i * 3 + 0] += dripVx[i] + Math.sin(dripPositions[i * 3 + 1] * 0.35 + elapsedTime * 2.5 + dripPhase[i]) * 0.010;
             }
 
             dripPositions[i * 3 + 1] += dripVy[i];
@@ -2125,45 +2182,47 @@
             if (dripPositions[i * 3 + 1] <= seaSurfaceY) {
               dripState[i] = 2; // Settle into the sea of stars
               dripBaseX[i] = dripPositions[i * 3 + 0];
-              dripVx[i] = (Math.random() - 0.5) * 0.024;
+              dripVx[i] = (Math.random() - 0.5) * 0.030;
             }
 
-            dripAlphas[i] = THREE.MathUtils.clamp(globalDripAlpha * 0.92, 0.0, 1.0);
+            dripAlphas[i] = THREE.MathUtils.clamp(globalDripAlpha * 0.96, 0.0, 1.0);
 
           } else if (dripState[i] === 2) {
-            // STATE 2: ACCUMULATED IN THE SEA OF STARS
+            // --- STATE 2: UNDULATING SEA OF STARS ---
             dripBaseX[i] += dripVx[i];
 
-            // Soft-wrap across screen edges
+            // Wrap gently across viewport boundaries
             if (dripBaseX[i] > halfWidth) dripBaseX[i] = -halfWidth;
             if (dripBaseX[i] < -halfWidth) dripBaseX[i] = halfWidth;
 
-            // Organic multi-harmonic waves across the stellar ocean
-            const wave1 = Math.sin(dripBaseX[i] * 0.15 + elapsedTime * 1.4 + dripPhase[i]) * 0.45;
-            const wave2 = Math.cos(dripBaseX[i] * 0.30 - elapsedTime * 0.9 + dripPhase[i] * 1.4) * 0.25;
-            const wave3 = Math.sin(elapsedTime * 0.65 + dripPhase[i]) * 0.15;
+            // Multi-harmonic ocean wave motion
+            const wave1 = Math.sin(dripBaseX[i] * 0.14 + elapsedTime * 1.5 + dripPhase[i]) * 0.55;
+            const wave2 = Math.cos(dripBaseX[i] * 0.28 - elapsedTime * 1.0 + dripPhase[i] * 1.4) * 0.32;
+            const wave3 = Math.sin(elapsedTime * 0.75 + dripPhase[i]) * 0.20;
 
-            dripPositions[i * 3 + 0] = dripBaseX[i] + Math.sin(elapsedTime * 0.75 + dripPhase[i]) * 0.22;
+            dripPositions[i * 3 + 0] = dripBaseX[i] + Math.sin(elapsedTime * 0.85 + dripPhase[i]) * 0.25;
             dripPositions[i * 3 + 1] = dripBaseY[i] + wave1 + wave2 + wave3;
-            dripPositions[i * 3 + 2] = THREE.MathUtils.lerp(dripPositions[i * 3 + 2], Math.sin(dripPhase[i] + elapsedTime * 0.8) * 2.4, 0.03);
+            dripPositions[i * 3 + 2] = THREE.MathUtils.lerp(dripPositions[i * 3 + 2], Math.sin(dripPhase[i] + elapsedTime * 0.8) * 3.0, 0.03);
 
-            // Shimmering phosphorescence
-            const twinkle = 0.70 + 0.30 * Math.sin(elapsedTime * 2.8 + dripPhase[i]);
+            // Shimmering phosphorescent twinkle
+            const twinkle = 0.72 + 0.28 * Math.sin(elapsedTime * 3.2 + dripPhase[i]);
             const lifeFrac = dripLife[i] / dripMaxLife[i];
-            const lifeFade = lifeFrac > 0.85 ? (1.0 - (lifeFrac - 0.85) / 0.15) : 1.0;
+            const lifeFade = lifeFrac > 0.88 ? (1.0 - (lifeFrac - 0.88) / 0.12) : 1.0;
 
             dripAlphas[i] = THREE.MathUtils.clamp(twinkle * lifeFade * globalDripAlpha, 0.0, 1.0);
 
             if (dripLife[i] >= dripMaxLife[i]) {
-              dripState[i] = 0; // Recycle back to emitter
+              dripLife[i] = 0; // Seamless recycle
             }
           }
 
-          // If scrolled back up to spiral galaxy, clear particles
-          if (morphProgress <= 0.08) {
-            dripState[i] = 0;
+          // If scrolled back up to spiral galaxy, clear
+          if (morphProgress <= 0.06) {
             dripAlphas[i] = 0.0;
-            dripPositions[i * 3 + 1] = -9999;
+            if (i >= 1900) {
+              dripState[i] = 0;
+              dripPositions[i * 3 + 1] = -9999;
+            }
           }
         }
 
