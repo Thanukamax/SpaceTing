@@ -707,7 +707,7 @@
     // 3. THREE.JS COSMIC SCENE: 3D MINERAL SAND GRAIN & SUPERNOVA EXPLOSION
     // ----------------------------------------------------
     let scene, camera, renderer;
-    let galaxyMesh, galaxyCoreMesh, starfieldMesh;
+    let galaxyMesh, galaxyCoreMesh, starfieldMesh, silhouettePlanetMesh;
     let positions, homePositions, velocities, fluidOffsets, colors, sizes, twinkles;
     let homeRadii, homeAngles, homeZ;
     let burstTurbulence;
@@ -1487,7 +1487,26 @@
       starfieldMesh = new THREE.Points(bgGeo, bgMat);
       scene.add(starfieldMesh);
 
-      // 6b. BED OF STARS AT THE BOTTOM OF THE SCREEN
+      // 6b. 3D-LIKE SILHOUETTE PLANET WITH RINGS (Positioned behind NOVA and Star Bed)
+      const planetGeo = new THREE.PlaneGeometry(48.0, 48.0);
+      const planetTexture = new THREE.TextureLoader().load('assets/planet_rings.png');
+      planetTexture.generateMipmaps = true;
+      planetTexture.minFilter = THREE.LinearMipmapLinearFilter;
+
+      const planetMat = new THREE.MeshBasicMaterial({
+        map: planetTexture,
+        transparent: true,
+        opacity: 0.0,
+        depthWrite: false
+      });
+
+      silhouettePlanetMesh = new THREE.Mesh(planetGeo, planetMat);
+      silhouettePlanetMesh.position.set(-1.0, 0.8, -16.0); // Behind NOVA (z = 0) and Star Bed (z = 0)
+      silhouettePlanetMesh.renderOrder = -5; // Physical depth rendering behind stars
+      silhouettePlanetMesh.visible = false;
+      scene.add(silhouettePlanetMesh);
+
+      // 6c. BED OF STARS AT THE BOTTOM OF THE SCREEN
       const starBedGeo = new THREE.BufferGeometry();
 
       for (let i = 0; i < starBedCount; i++) {
@@ -2103,6 +2122,31 @@
         }
       }
 
+      // ----------------------------------------------------
+      // 3D SILHOUETTE PLANET WITH RINGS (Behind NOVA and Star Bed)
+      // ----------------------------------------------------
+      if (silhouettePlanetMesh && silhouettePlanetMesh.material) {
+        if (introComplete && morphProgress > 0.02) {
+          // Smoothly blooms into view as you scroll to NOVA
+          const rawP = THREE.MathUtils.clamp((morphProgress - 0.06) / 0.65, 0.0, 1.0);
+          const planetAlpha = rawP * rawP * (3.0 - 2.0 * rawP);
+
+          if (planetAlpha > 0.001) {
+            silhouettePlanetMesh.visible = true;
+            silhouettePlanetMesh.material.opacity = planetAlpha * 0.98;
+            // Subtle, majestic celestial rotation and orbital breathing
+            silhouettePlanetMesh.rotation.z = -0.10 + Math.sin(elapsedTime * 0.12) * 0.015;
+            silhouettePlanetMesh.position.y = 0.8 + Math.sin(elapsedTime * 0.20) * 0.20;
+          } else {
+            silhouettePlanetMesh.visible = false;
+            silhouettePlanetMesh.material.opacity = 0.0;
+          }
+        } else {
+          silhouettePlanetMesh.visible = false;
+          silhouettePlanetMesh.material.opacity = 0.0;
+        }
+      }
+
       renderer.render(scene, camera);
     }
 
@@ -2167,6 +2211,12 @@
         starBedMesh.visible = false;
         if (starBedMesh.material.uniforms) {
           starBedMesh.material.uniforms.uMorph.value = 0.0;
+        }
+      }
+      if (silhouettePlanetMesh) {
+        silhouettePlanetMesh.visible = false;
+        if (silhouettePlanetMesh.material) {
+          silhouettePlanetMesh.material.opacity = 0.0;
         }
       }
 
