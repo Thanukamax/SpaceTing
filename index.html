@@ -733,11 +733,12 @@
     let wheelScrollAccumulator = 0.0;
 
     // ====================================================
-    // BED OF STARS AT THE BOTTOM OF THE SCREEN
+    // SEA OF STARS BORDER ACROSS ENTIRE PAGE LENGTH
     // Pure celestial star bed: static layout, no mouse reaction, no physics
+    // Acts as a full-bleed border between NOVA text and the page content
     // ====================================================
     let starBedMesh = null;
-    const starBedCount = 2400;
+    const starBedCount = 3600;
     const starBedPositions = new Float32Array(starBedCount * 3);
     const starBedColors = new Float32Array(starBedCount * 3);
     const starBedSizes = new Float32Array(starBedCount);
@@ -758,18 +759,33 @@
       const tanHalfFov = 0.4244748;
       const visHalfH = camZ * tanHalfFov;
       const aspect = (camera && camera.aspect) ? camera.aspect : (window.innerWidth / window.innerHeight);
-      const halfW = visHalfH * aspect * 1.15;
-      const bottomY = -visHalfH * 1.02; // Hugs bottom edge of screen
-      const topY = -visHalfH * 0.55;    // Upper threshold of the bed, comfortably below NOVA
+      
+      // Full bleed across the entire page length (edge-to-edge with generous margin on all screens)
+      const halfW = Math.max(visHalfH * aspect * 1.30, 52.0);
+      
+      // Border sits directly beneath NOVA text (letters end at y = -3.2)
+      // and spans all the way down across the bottom of the page
+      const topY = -visHalfH * 0.28;    // Horizon border line right beneath NOVA letters (~ -5.2)
+      const bottomY = -visHalfH * 1.05; // Extends all the way down past the bottom of the screen (~ -19.6)
       const heightSpan = topY - bottomY;
 
       const posArr = starBedMesh.geometry.attributes.position.array;
       for (let i = 0; i < starBedCount; i++) {
+        // Continuous horizontal span across the full page length
         const x = (starBedRandsX[i] - 0.5) * 2.0 * halfW;
-        // Natural distribution: denser towards bottom edge, feathering upward
-        const yFrac = Math.pow(starBedRandsY[i], 1.45);
-        const y = bottomY + yFrac * heightSpan;
-        const z = (starBedRandsZ[i] - 0.5) * 4.0;
+        
+        let y;
+        if (i < starBedCount * 0.35) {
+          // 35% of stars form a crisp, radiant horizontal border crest directly beneath NOVA
+          // Creates a distinct dividing line/border between NOVA and the content below
+          const crestThickness = heightSpan * 0.12;
+          y = topY - Math.pow(starBedRandsY[i], 1.8) * crestThickness;
+        } else {
+          // 65% of stars form the full sea body spanning down to the bottom of the screen
+          y = bottomY + starBedRandsY[i] * heightSpan;
+        }
+
+        const z = (starBedRandsZ[i] - 0.5) * 4.5;
 
         posArr[i * 3 + 0] = x;
         posArr[i * 3 + 1] = y;
@@ -1478,14 +1494,28 @@
         // Size hierarchy matching NOVA: tiny stardust, medium stars, radiant stars, mega-giants
         const roll = Math.random();
         let starSize;
-        if (roll < 0.76) {
-          starSize = 1.0 + Math.random() * 1.4; // Delicate cosmic stardust
-        } else if (roll < 0.91) {
-          starSize = 2.8 + Math.random() * 2.2; // Medium stars
-        } else if (roll < 0.97) {
-          starSize = 6.0 + Math.random() * 3.0; // Large radiant stars
+        if (i < starBedCount * 0.35) {
+          // Border crest stars: higher proportion of bright radiant stars to make the border pop!
+          if (roll < 0.65) {
+            starSize = 1.2 + Math.random() * 1.5;
+          } else if (roll < 0.85) {
+            starSize = 3.2 + Math.random() * 2.5;
+          } else if (roll < 0.95) {
+            starSize = 6.8 + Math.random() * 3.5;
+          } else {
+            starSize = 12.0 + Math.random() * 4.0; // Spectacular mega-giants along the border
+          }
         } else {
-          starSize = 10.5 + Math.random() * 4.0; // Mega-giants with 4-point cross diffraction spikes
+          // Sea body stars spanning down the page
+          if (roll < 0.78) {
+            starSize = 1.0 + Math.random() * 1.4;
+          } else if (roll < 0.92) {
+            starSize = 2.6 + Math.random() * 2.2;
+          } else if (roll < 0.98) {
+            starSize = 5.8 + Math.random() * 3.0;
+          } else {
+            starSize = 10.5 + Math.random() * 3.5;
+          }
         }
         starBedSizes[i] = starSize;
         starBedTwinkles[i] = Math.random() * 100.0;
