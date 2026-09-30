@@ -732,24 +732,28 @@
     let morphProgress = 0.0;
     let wheelScrollAccumulator = 0.0;
 
-    // NOVA Drip Stars & Sea of Stars Simulation System
-    let dripSeaMesh = null;
-    const dripCount = 3600;
-    let novaDripEmitters = null;
-    const dripPositions = new Float32Array(dripCount * 3);
-    const dripColors = new Float32Array(dripCount * 3);
-    const dripSizes = new Float32Array(dripCount);
-    const dripAlphas = new Float32Array(dripCount);
-    const dripState = new Uint8Array(dripCount); // 0=inactive, 1=falling/dripping, 2=sea of stars
-    const dripVx = new Float32Array(dripCount);
-    const dripVy = new Float32Array(dripCount);
-    const dripVz = new Float32Array(dripCount);
-    const dripBaseX = new Float32Array(dripCount);
-    const dripBaseY = new Float32Array(dripCount);
-    const dripPhase = new Float32Array(dripCount);
-    const dripLife = new Float32Array(dripCount);
-    const dripMaxLife = new Float32Array(dripCount);
-    const dripEmitterType = new Uint8Array(dripCount); // 0=N_L, 1=N_R, 2=O, 3=V, 4=A_L, 5=A_R
+    // ====================================================
+    // FISH TANK LIQUID STAR SIMULATION SYSTEM
+    // ====================================================
+    let tankStarMesh = null;
+    const tankStarCount = 2400;
+    const tankPositions = new Float32Array(tankStarCount * 3);
+    const tankColors = new Float32Array(tankStarCount * 3);
+    const tankSizes = new Float32Array(tankStarCount);
+    const tankTwinkles = new Float32Array(tankStarCount);
+
+    // Liquid physics state arrays
+    const tankVx = new Float32Array(tankStarCount);
+    const tankVy = new Float32Array(tankStarCount);
+    const tankVz = new Float32Array(tankStarCount);
+    const tankBuoyancy = new Float32Array(tankStarCount); // Buoyant tendency (0.0 to 1.0)
+    const tankTargetLayer = new Float32Array(tankStarCount); // Equilibrium depth ratio
+    const tankPhase = new Float32Array(tankStarCount);
+
+    // Shallow-water wave surface heightfield (120 columns across tank width)
+    const TANK_WAVE_COLS = 120;
+    const tankWaveH = new Float32Array(TANK_WAVE_COLS);
+    const tankWaveV = new Float32Array(TANK_WAVE_COLS);
 
     // Fluid cursor tracking in 3D galaxy plane
     const mouse2D = new THREE.Vector2(0, 0);
@@ -864,52 +868,6 @@
         targets[i * 3 + 1] = Math.sin(angle) * rad * 0.45;
         targets[i * 3 + 2] = (Math.random() - 0.5) * 3.5;
       }
-
-      // ----------------------------------------------------
-      // Extract Anatomical Drip Emitter Anchors for NOVA
-      // N: 2 vertical lines | |
-      // O: Dark Sun eclipse bottom curve
-      // V: Bottom apex dropping straight down like a Y
-      // A: 2 bottom diagonal feet / \
-      // ----------------------------------------------------
-      const isMob = window.innerWidth < 640;
-      const isTab = window.innerWidth < 1024;
-      const tW = isMob ? 22.0 : (isTab ? 27.0 : 32.0);
-      const sFactor = tW / 32.0;
-
-      // Geometric ground truth anchors (calibrated to Apple SF Pro 900 typography)
-      // Letter bottoms are at y = -3.2 * sFactor
-      const letterBottomY = -3.2 * sFactor;
-      const nLX = -13.6 * sFactor;
-      const nRX = -8.8 * sFactor;
-      const oCX = -3.7 * sFactor;
-      const oCY = 0.0;
-      const oRad = 3.2 * sFactor;
-      const vX = 3.7 * sFactor;
-      const aLX = 8.6 * sFactor;
-      const aRX = 13.8 * sFactor;
-
-      // Generate Dark Sun weeping arc points along the bottom curvature of O
-      const oBottomArc = [];
-      const arcSamples = 24;
-      for (let a = 0; a < arcSamples; a++) {
-        // Angles from 210 deg to 330 deg (lower crescent)
-        const ang = Math.PI * (1.15 + (a / (arcSamples - 1)) * 0.70);
-        oBottomArc.push({
-          x: oCX + Math.cos(ang) * (oRad * 0.95),
-          y: oCY + Math.sin(ang) * (oRad * 0.95)
-        });
-      }
-
-      novaDripEmitters = {
-        nLeft: { x: nLX, y: letterBottomY },
-        nRight: { x: nRX, y: letterBottomY },
-        oArc: oBottomArc,
-        oCenter: { x: oCX, y: oCY },
-        vApex: { x: vX, y: letterBottomY - 0.2 },
-        aLeft: { x: aLX, y: letterBottomY },
-        aRight: { x: aRX, y: letterBottomY }
-      };
 
       return targets;
     }
@@ -1490,77 +1448,133 @@
       starfieldMesh = new THREE.Points(bgGeo, bgMat);
       scene.add(starfieldMesh);
 
-      // 6b. Drip Stars & Sea of Stars Dedicated Particle System
-      const dripGeo = new THREE.BufferGeometry();
-      for (let i = 0; i < dripCount; i++) {
-        // Initialize within visible frustum so initial bounding sphere is centered at origin
-        dripPositions[i * 3 + 0] = (Math.random() - 0.5) * 35.0;
-        dripPositions[i * 3 + 1] = -8.0 - Math.random() * 5.0;
-        dripPositions[i * 3 + 2] = (Math.random() - 0.5) * 2.5;
+// 6b. FISH TANK LIQUID STAR PARTICLE SYSTEM
+      const tankGeo = new THREE.BufferGeometry();
 
-        dripColors[i * 3 + 0] = 1.0;
-        dripColors[i * 3 + 1] = 0.94;
-        dripColors[i * 3 + 2] = 0.82;
+      // Distribution matching NOVA: 80% tiny, 14% medium, 4.5% large, 1.5% mega-giants with spikes
+      for (let i = 0; i < tankStarCount; i++) {
+        // Initial distribution inside the fish tank: floor at y = -15.5, surface at y = -7.5
+        const normX = (Math.random() - 0.5) * 55.0;
+        const normY = -15.5 + Math.random() * 8.0;
+        const normZ = (Math.random() - 0.5) * 5.0;
 
-        dripSizes[i] = 4.5 + Math.random() * 5.5;
-        dripAlphas[i] = 0.0; // Invisible until morph starts
-        dripPhase[i] = Math.random() * Math.PI * 2;
-        dripState[i] = 0;
+        tankPositions[i * 3 + 0] = normX;
+        tankPositions[i * 3 + 1] = normY;
+        tankPositions[i * 3 + 2] = normZ;
+
+        tankVx[i] = (Math.random() - 0.5) * 0.02;
+        tankVy[i] = (Math.random() - 0.5) * 0.02;
+        tankVz[i] = (Math.random() - 0.5) * 0.01;
+
+        // Star sizing & buoyancy matching NOVA
+        const roll = Math.random();
+        let starSize;
+        if (roll < 0.78) {
+          starSize = 0.95 + Math.random() * 1.35; // Tiny fluid stardust
+          tankBuoyancy[i] = 0.15 + Math.random() * 0.40; // Drifts through deep volume
+          tankTargetLayer[i] = Math.random() * 0.70; // Lower/mid layers
+        } else if (roll < 0.92) {
+          starSize = 2.6 + Math.random() * 2.4; // Medium liquid stars
+          tankBuoyancy[i] = 0.50 + Math.random() * 0.35; // Mid/upper fluid layers
+          tankTargetLayer[i] = 0.35 + Math.random() * 0.50;
+        } else if (roll < 0.98) {
+          starSize = 5.8 + Math.random() * 3.2; // Large radiant stars
+          tankBuoyancy[i] = 0.82 + Math.random() * 0.16; // Floats near surface
+          tankTargetLayer[i] = 0.75 + Math.random() * 0.22;
+        } else {
+          starSize = 10.5 + Math.random() * 3.0; // Mega-giants with diffraction spikes
+          tankBuoyancy[i] = 0.96 + Math.random() * 0.04; // Rides the water surface waves!
+          tankTargetLayer[i] = 0.92 + Math.random() * 0.08;
+        }
+        tankSizes[i] = starSize;
+        tankTwinkles[i] = Math.random() * 100.0;
+        tankPhase[i] = Math.random() * Math.PI * 2;
+
+        // Rich colors from colorPalette: cyan, blue, purple, red, orange, and core white
+        let col;
+        const cRoll = Math.random();
+        if (cRoll < 0.12) {
+          col = colorPalette.core;
+        } else if (cRoll < 0.36) {
+          col = colorPalette.blue[Math.floor(Math.random() * colorPalette.blue.length)];
+        } else if (cRoll < 0.58) {
+          col = colorPalette.purple[Math.floor(Math.random() * colorPalette.purple.length)];
+        } else if (cRoll < 0.80) {
+          col = colorPalette.orange[Math.floor(Math.random() * colorPalette.orange.length)];
+        } else {
+          col = colorPalette.red[Math.floor(Math.random() * colorPalette.red.length)];
+        }
+
+        tankColors[i * 3 + 0] = col.r;
+        tankColors[i * 3 + 1] = col.g;
+        tankColors[i * 3 + 2] = col.b;
       }
-      const posAttr = new THREE.BufferAttribute(dripPositions, 3).setUsage(THREE.DynamicDrawUsage);
-      const colAttr = new THREE.BufferAttribute(dripColors, 3).setUsage(THREE.DynamicDrawUsage);
-      const sizeAttr = new THREE.BufferAttribute(dripSizes, 1).setUsage(THREE.DynamicDrawUsage);
-      const alphaAttr = new THREE.BufferAttribute(dripAlphas, 1).setUsage(THREE.DynamicDrawUsage);
 
-      dripGeo.setAttribute('position', posAttr);
-      dripGeo.setAttribute('aColor', colAttr);
-      dripGeo.setAttribute('aSize', sizeAttr);
-      dripGeo.setAttribute('aAlpha', alphaAttr);
-      dripGeo.computeBoundingSphere();
+      const tPosAttr = new THREE.BufferAttribute(tankPositions, 3).setUsage(THREE.DynamicDrawUsage);
+      const tColAttr = new THREE.BufferAttribute(tankColors, 3).setUsage(THREE.DynamicDrawUsage);
+      const tSizeAttr = new THREE.BufferAttribute(tankSizes, 1).setUsage(THREE.DynamicDrawUsage);
+      const tTwinkleAttr = new THREE.BufferAttribute(tankTwinkles, 1).setUsage(THREE.DynamicDrawUsage);
 
-      const dripMat = new THREE.ShaderMaterial({
+      tankGeo.setAttribute('position', tPosAttr);
+      tankGeo.setAttribute('aColor', tColAttr);
+      tankGeo.setAttribute('aSize', tSizeAttr);
+      tankGeo.setAttribute('aTwinkle', tTwinkleAttr);
+
+      // Exact high-fidelity shader matching NOVA (core, glow, spikes, twinkling, additive blending)
+      const tankMat = new THREE.ShaderMaterial({
         uniforms: {
-          uTime: { value: 0 }
+          uTime: { value: 0 },
+          uMorph: { value: 0.0 }
         },
         vertexShader: `
-          attribute float aSize;
+          uniform float uTime;
+          uniform float uMorph;
           attribute vec3 aColor;
-          attribute float aAlpha;
+          attribute float aSize;
+          attribute float aTwinkle;
           varying vec3 vColor;
           varying float vAlpha;
           varying float vSize;
+
           void main() {
             vColor = aColor;
-            vAlpha = aAlpha;
             vSize = aSize;
             vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = aSize * (180.0 / -mvPos.z);
             gl_Position = projectionMatrix * mvPos;
+
+            float twSpeed = mix(2.5, 1.2, clamp(aSize / 15.0, 0.0, 1.0));
+            float tw = 0.82 + 0.18 * sin(uTime * twSpeed + aTwinkle);
+            float sizeBoost = mix(1.0, 1.35, clamp(aSize / 15.0, 0.0, 1.0));
+
+            // Fades in smoothly as user scrolls towards NOVA
+            vAlpha = tw * uMorph * sizeBoost;
+            gl_PointSize = aSize * (150.0 / -mvPos.z) * tw;
           }
         `,
         fragmentShader: `
           varying vec3 vColor;
           varying float vAlpha;
           varying float vSize;
+
           void main() {
             vec2 coord = gl_PointCoord - vec2(0.5);
             float dist = length(coord);
             if (dist > 0.5) discard;
 
             float core = smoothstep(0.24, 0.0, dist);
-            float glow = exp(-dist * 8.5);
-            float edge = smoothstep(0.5, 0.12, dist);
+            float glow = exp(-dist * 9.5);
+            float edge = smoothstep(0.5, 0.15, dist);
 
             float spike = 0.0;
-            if (vSize > 6.0) {
-              float spikeIntensity = clamp((vSize - 6.0) / 5.0, 0.0, 1.0);
-              float spikeX = exp(-abs(coord.x) * 32.0) * exp(-abs(coord.y) * 4.0);
-              float spikeY = exp(-abs(coord.y) * 32.0) * exp(-abs(coord.x) * 4.0);
-              spike = max(spikeX, spikeY) * 0.75 * spikeIntensity;
+            if (vSize > 7.0) {
+              float spikeIntensity = clamp((vSize - 7.0) / 8.0, 0.0, 1.0);
+              float spikeX = exp(-abs(coord.x) * 36.0) * exp(-abs(coord.y) * 4.0);
+              float spikeY = exp(-abs(coord.y) * 36.0) * exp(-abs(coord.x) * 4.0);
+              spike = max(spikeX, spikeY) * 0.65 * spikeIntensity;
             }
 
-            vec3 finalColor = mix(vColor, vec3(1.0, 1.0, 1.0), core * 0.95 + spike * 0.6);
-            float alpha = clamp((core * 0.92 + glow * 0.60 + spike) * edge * vAlpha, 0.0, 1.0);
+            vec3 finalColor = mix(vColor, vec3(1.0, 1.0, 1.0), core * 0.92 + spike * 0.5);
+            float alpha = clamp((core * 0.88 + glow * 0.55 + spike) * edge * vAlpha, 0.0, 1.0);
 
             gl_FragColor = vec4(finalColor, alpha);
           }
@@ -1570,9 +1584,9 @@
         depthWrite: false
       });
 
-      dripSeaMesh = new THREE.Points(dripGeo, dripMat);
-      dripSeaMesh.frustumCulled = false; // Never cull full-screen dynamic particles!
-      scene.add(dripSeaMesh);
+      tankStarMesh = new THREE.Points(tankGeo, tankMat);
+      tankStarMesh.frustumCulled = false; // Never cull full-screen dynamic particles!
+      scene.add(tankStarMesh);
 
       // Event Listeners for fluid cursor interaction & responsive layout
       window.addEventListener('resize', onWindowResize);
@@ -1966,219 +1980,172 @@
         galaxyCoreMesh.material.opacity = 0.85 * (1.0 - morphProgress * 0.50);
       }
 
+// ----------------------------------------------------
+      // FISH TANK LIQUID PHYSICS SIMULATION
+      // Stars simulated as water sloshing in an aquarium
       // ----------------------------------------------------
-      // NOVA DRIP STARS & SEA OF STARS SIMULATION
-      // ----------------------------------------------------
-      if (dripSeaMesh && novaDripEmitters && introComplete) {
-        // Compute sea position in the visible lower third of the screen:
-        // Visible half height is camZ * tan(23 deg) ≈ camZ * 0.42447
+      if (tankStarMesh && introComplete) {
+        // Tank geometry in camera world coordinates
         const visHalfH = camera.position.z * 0.4244748;
-        // Sea sits comfortably at Y between -0.42*visHalfH and -0.72*visHalfH
-        // On desktop (camZ=44, visHalfH=18.68): sea sits between Y = -7.8 and Y = -13.2 (crystal clear in viewport!)
-        const seaTopY = -visHalfH * 0.45;
-        const seaBottomY = -visHalfH * 0.72;
-        const halfWidth = visHalfH * camera.aspect * 1.05;
+        const tankLeftX = -visHalfH * camera.aspect * 0.95;
+        const tankRightX = visHalfH * camera.aspect * 0.95;
+        const tankFloorY = -visHalfH * 0.88; // Bottom of tank
+        const tankEquilSurfaceY = -visHalfH * 0.44; // Surface equilibrium line
+        const tankHeight = tankEquilSurfaceY - tankFloorY;
+        const tankSpanX = tankRightX - tankLeftX;
 
-        // Visibility starts as you scroll down: 15% morph starts glow, 85%+ full radiant intensity
-        const globalDripAlpha = THREE.MathUtils.clamp((morphProgress - 0.10) / 0.65, 0.0, 1.0);
-        const dripActive = morphProgress > 0.25;
-
-        // One-time pre-seeding of the Sea of Stars (1,800 stars)
-        if (!window._seaBedSeeded) {
-          window._seaBedSeeded = true;
-          for (let i = 0; i < 1800; i++) {
-            dripState[i] = 2; // Settled in sea
-            dripBaseX[i] = (Math.random() - 0.5) * halfWidth * 2.0;
-            dripBaseY[i] = seaBottomY + Math.random() * (seaTopY - seaBottomY);
-            dripVx[i] = (Math.random() - 0.5) * 0.024;
-            dripPhase[i] = Math.random() * Math.PI * 2;
-            dripLife[i] = Math.random() * 20.0;
-            dripMaxLife[i] = 25.0 + Math.random() * 25.0;
-
-            dripPositions[i * 3 + 0] = dripBaseX[i];
-            dripPositions[i * 3 + 1] = dripBaseY[i];
-            dripPositions[i * 3 + 2] = (Math.random() - 0.5) * 3.0;
-
-            // Palette of starlight gold, celestial cyan, core white and solar amber
-            const rCol = Math.random();
-            if (rCol < 0.35) {
-              dripColors[i * 3 + 0] = 1.0; dripColors[i * 3 + 1] = 0.94; dripColors[i * 3 + 2] = 0.82; // Warm starlight gold
-            } else if (rCol < 0.60) {
-              dripColors[i * 3 + 0] = 0.45; dripColors[i * 3 + 1] = 0.80; dripColors[i * 3 + 2] = 1.0; // Celestial cyan
-            } else if (rCol < 0.85) {
-              dripColors[i * 3 + 0] = 1.0; dripColors[i * 3 + 1] = 0.98; dripColors[i * 3 + 2] = 0.95; // Incandescent core white
-            } else {
-              dripColors[i * 3 + 0] = 1.0; dripColors[i * 3 + 1] = 0.65; dripColors[i * 3 + 2] = 0.22; // Solar amber
-            }
-
-            dripSizes[i] = Math.random() < 0.15 ? (7.0 + Math.random() * 4.5) : (3.8 + Math.random() * 3.2);
-            dripAlphas[i] = 0.0;
-          }
+        // 1. SHALLOW-WATER 1D SURFACE WAVE FIELD (Sloshing & Wall Reflections)
+        // Wave speed c=0.28, coupling k=0.12, damping=0.982
+        for (let w = 0; w < TANK_WAVE_COLS; w++) {
+          const leftH = w > 0 ? tankWaveH[w - 1] : tankWaveH[1]; // Neumann wall reflection (slosh bounce!)
+          const rightH = w < TANK_WAVE_COLS - 1 ? tankWaveH[w + 1] : tankWaveH[TANK_WAVE_COLS - 2];
+          const laplacian = leftH + rightH - 2.0 * tankWaveH[w];
+          const restoring = -0.016 * tankWaveH[w]; // Gravity restoring force
+          tankWaveV[w] = (tankWaveV[w] + laplacian * 0.14 + restoring) * 0.980;
+        }
+        for (let w = 0; w < TANK_WAVE_COLS; w++) {
+          tankWaveH[w] += tankWaveV[w];
         }
 
-        // Active Cascading Drips from letter anchors (1,800 to 3,599)
-        if (dripActive) {
-          const spawnCount = Math.floor(THREE.MathUtils.lerp(4, 16, (morphProgress - 0.25) / 0.75));
-          for (let s = 0; s < spawnCount; s++) {
-            let pIdx = -1;
-            for (let k = 1800; k < dripCount; k++) {
-              if (dripState[k] === 0) { pIdx = k; break; }
-            }
-            if (pIdx === -1) {
-              pIdx = 1800 + Math.floor(Math.random() * (dripCount - 1800));
-            }
+        // Ambient cosmic tidal slosh: gentle rhythmic rocking against tank walls
+        const ambientRock = Math.sin(elapsedTime * 1.35) * 0.08 + Math.cos(elapsedTime * 0.8) * 0.04;
+        tankWaveH[0] += ambientRock * 0.08;
+        tankWaveH[TANK_WAVE_COLS - 1] -= ambientRock * 0.08;
 
-            // Probability: N (26%), O Dark Sun (26%), V Y-stem (26%), A (22%)
-            const rChoice = Math.random();
-            let eType = 0;
-            if (rChoice < 0.13) eType = 0;       // N left line |
-            else if (rChoice < 0.26) eType = 1;  // N right line |
-            else if (rChoice < 0.52) eType = 2;  // O Dark Sun weeping arc
-            else if (rChoice < 0.78) eType = 3;  // V Y-stem apex
-            else if (rChoice < 0.89) eType = 4;  // A left foot /
-            else eType = 5;                      // A right foot \
-
-            dripEmitterType[pIdx] = eType;
-            dripState[pIdx] = 1; // Falling / dripping
-            dripLife[pIdx] = 0;
-            dripMaxLife[pIdx] = 20.0 + Math.random() * 25.0;
-
-            let sx = 0, sy = 0, sz = (Math.random() - 0.5) * 1.2;
-            let cr = 1.0, cg = 0.94, cb = 0.82; // Default radiant starlight gold
-
-            if (eType === 0 && novaDripEmitters.nLeft) {
-              // N: Left vertical line |
-              sx = novaDripEmitters.nLeft.x + (Math.random() - 0.5) * 0.14;
-              sy = novaDripEmitters.nLeft.y - 0.05;
-              dripVx[pIdx] = (Math.random() - 0.5) * 0.008;
-            } else if (eType === 1 && novaDripEmitters.nRight) {
-              // N: Right vertical line |
-              sx = novaDripEmitters.nRight.x + (Math.random() - 0.5) * 0.14;
-              sy = novaDripEmitters.nRight.y - 0.05;
-              dripVx[pIdx] = (Math.random() - 0.5) * 0.008;
-            } else if (eType === 2 && novaDripEmitters.oArc && novaDripEmitters.oArc.length > 0) {
-              // O: Darksun weeping eclipse from Dark Souls (bleeds downward across bottom arc)
-              const pt = novaDripEmitters.oArc[Math.floor(Math.random() * novaDripEmitters.oArc.length)];
-              sx = pt.x + (Math.random() - 0.5) * 0.18;
-              sy = pt.y - 0.05;
-              const ox = novaDripEmitters.oCenter ? novaDripEmitters.oCenter.x : sx;
-              dripVx[pIdx] = (sx - ox) * 0.025 + (Math.random() - 0.5) * 0.012;
-              // Molten dark sun eclipse colors: blazing gold, amber, and dark crimson
-              if (Math.random() < 0.45) { cr = 1.0; cg = 0.60; cb = 0.12; }
-              else if (Math.random() < 0.75) { cr = 1.0; cg = 0.30; cb = 0.25; }
-              else { cr = 0.85; cg = 0.50; cb = 1.0; }
-            } else if (eType === 3 && novaDripEmitters.vApex) {
-              // V: Drips straight down like a needle, extending into a capital Y stem!
-              sx = novaDripEmitters.vApex.x + (Math.random() - 0.5) * 0.04;
-              sy = novaDripEmitters.vApex.y - 0.05;
-              dripVx[pIdx] = 0; // Pure straight downward stream!
-              cr = 1.0; cg = 1.0; cb = 1.0; // Blinding core white
-            } else if (eType === 4 && novaDripEmitters.aLeft) {
-              // A: Left diagonal foot /
-              sx = novaDripEmitters.aLeft.x + (Math.random() - 0.5) * 0.14;
-              sy = novaDripEmitters.aLeft.y - 0.05;
-              dripVx[pIdx] = -0.012 + (Math.random() - 0.5) * 0.008;
-            } else if (eType === 5 && novaDripEmitters.aRight) {
-              // A: Right diagonal foot \
-              sx = novaDripEmitters.aRight.x + (Math.random() - 0.5) * 0.14;
-              sy = novaDripEmitters.aRight.y - 0.05;
-              dripVx[pIdx] = 0.012 + (Math.random() - 0.5) * 0.008;
-            }
-
-            dripVy[pIdx] = -0.05 - Math.random() * 0.06;
-            dripVz[pIdx] = (Math.random() - 0.5) * 0.012;
-            dripBaseX[pIdx] = sx;
-            dripBaseY[pIdx] = seaBottomY + Math.random() * (seaTopY - seaBottomY);
-
-            dripPositions[pIdx * 3 + 0] = sx;
-            dripPositions[pIdx * 3 + 1] = sy;
-            dripPositions[pIdx * 3 + 2] = sz;
-
-            dripColors[pIdx * 3 + 0] = cr;
-            dripColors[pIdx * 3 + 1] = cg;
-            dripColors[pIdx * 3 + 2] = cb;
-
-            // Prominent visible star drops (V stem drops are crystalline & prominent)
-            dripSizes[pIdx] = eType === 3 ? (6.5 + Math.random() * 4.5) : (4.0 + Math.random() * 4.0);
-            dripAlphas[pIdx] = 0.98;
-          }
-        }
-
-        // Simulate falling drops and undulating sea wave physics
-        for (let i = 0; i < dripCount; i++) {
-          if (dripState[i] === 0) {
-            dripAlphas[i] = 0.0;
-            continue;
-          }
-
-          dripLife[i] += 0.016;
-
-          if (dripState[i] === 1) {
-            // --- STATE 1: FALLING STREAM DROPS ---
-            dripVy[i] -= 0.0030; // Cosmic gravity
-            dripVy[i] = Math.max(dripVy[i], -0.28);
-
-            // V emitter stem stays needle-straight under the apex to visually form the Y
-            if (dripEmitterType[i] === 3 && novaDripEmitters.vApex) {
-              dripPositions[i * 3 + 0] = novaDripEmitters.vApex.x + Math.sin(dripPositions[i * 3 + 1] * 0.4 + elapsedTime * 2.0) * 0.035;
-            } else {
-              dripPositions[i * 3 + 0] += dripVx[i] + Math.sin(dripPositions[i * 3 + 1] * 0.35 + elapsedTime * 2.5 + dripPhase[i]) * 0.008;
-            }
-
-            dripPositions[i * 3 + 1] += dripVy[i];
-            dripPositions[i * 3 + 2] += dripVz[i];
-
-            // Reached the sea!
-            if (dripPositions[i * 3 + 1] <= seaTopY) {
-              dripState[i] = 2; // Settle into the sea of stars
-              dripBaseX[i] = dripPositions[i * 3 + 0];
-              dripVx[i] = (Math.random() - 0.5) * 0.026;
-            }
-
-            dripAlphas[i] = THREE.MathUtils.clamp(globalDripAlpha * 0.98, 0.0, 1.0);
-
-          } else if (dripState[i] === 2) {
-            // --- STATE 2: UNDULATING SEA OF STARS ---
-            dripBaseX[i] += dripVx[i];
-
-            // Wrap gently across viewport boundaries
-            if (dripBaseX[i] > halfWidth) dripBaseX[i] = -halfWidth;
-            if (dripBaseX[i] < -halfWidth) dripBaseX[i] = halfWidth;
-
-            // Multi-harmonic ocean wave motion
-            const wave1 = Math.sin(dripBaseX[i] * 0.14 + elapsedTime * 1.5 + dripPhase[i]) * 0.55;
-            const wave2 = Math.cos(dripBaseX[i] * 0.28 - elapsedTime * 1.0 + dripPhase[i] * 1.4) * 0.30;
-            const wave3 = Math.sin(elapsedTime * 0.75 + dripPhase[i]) * 0.18;
-
-            dripPositions[i * 3 + 0] = dripBaseX[i] + Math.sin(elapsedTime * 0.85 + dripPhase[i]) * 0.22;
-            dripPositions[i * 3 + 1] = dripBaseY[i] + wave1 + wave2 + wave3;
-            dripPositions[i * 3 + 2] = THREE.MathUtils.lerp(dripPositions[i * 3 + 2], Math.sin(dripPhase[i] + elapsedTime * 0.8) * 2.8, 0.03);
-
-            // Shimmering phosphorescent twinkle
-            const twinkle = 0.75 + 0.25 * Math.sin(elapsedTime * 3.2 + dripPhase[i]);
-            const lifeFrac = dripLife[i] / dripMaxLife[i];
-            const lifeFade = lifeFrac > 0.88 ? (1.0 - (lifeFrac - 0.88) / 0.12) : 1.0;
-
-            dripAlphas[i] = THREE.MathUtils.clamp(twinkle * lifeFade * globalDripAlpha, 0.0, 1.0);
-
-            if (dripLife[i] >= dripMaxLife[i]) {
-              dripLife[i] = 0; // Seamless recycle
-            }
-          }
-
-          // If scrolled back up to spiral galaxy, clear
-          if (morphProgress <= 0.05) {
-            dripAlphas[i] = 0.0;
-            if (i >= 1800) {
-              dripState[i] = 0;
+        // Cursor interaction: splashing and sloshing the water with mouse
+        if (isMouseActive && cursor3D.x > tankLeftX && cursor3D.x < tankRightX) {
+          const colIdx = Math.floor(((cursor3D.x - tankLeftX) / tankSpanX) * TANK_WAVE_COLS);
+          if (colIdx >= 0 && colIdx < TANK_WAVE_COLS) {
+            const distToSurface = Math.abs(cursor3D.y - (tankEquilSurfaceY + tankWaveH[colIdx]));
+            if (distToSurface < 3.5) {
+              const splash = THREE.MathUtils.clamp(-cursorSpeed * 0.45, -0.6, 0.6);
+              tankWaveV[colIdx] += splash;
+              if (colIdx > 0) tankWaveV[colIdx - 1] += splash * 0.5;
+              if (colIdx < TANK_WAVE_COLS - 1) tankWaveV[colIdx + 1] += splash * 0.5;
             }
           }
         }
 
-        dripSeaMesh.geometry.attributes.position.needsUpdate = true;
-        dripSeaMesh.geometry.attributes.aAlpha.needsUpdate = true;
-        dripSeaMesh.geometry.attributes.aColor.needsUpdate = true;
-        dripSeaMesh.geometry.attributes.aSize.needsUpdate = true;
+        // Function to sample surface wave height at any X coordinate
+        function getSurfaceHeight(wx) {
+          const u = THREE.MathUtils.clamp((wx - tankLeftX) / tankSpanX, 0.0, 1.0);
+          const fIdx = u * (TANK_WAVE_COLS - 1);
+          const i0 = Math.floor(fIdx);
+          const i1 = Math.min(i0 + 1, TANK_WAVE_COLS - 1);
+          const frac = fIdx - i0;
+          return tankEquilSurfaceY + THREE.MathUtils.lerp(tankWaveH[i0], tankWaveH[i1], frac);
+        }
+
+        function getSurfaceVel(wx) {
+          const u = THREE.MathUtils.clamp((wx - tankLeftX) / tankSpanX, 0.0, 1.0);
+          const idx = Math.round(u * (TANK_WAVE_COLS - 1));
+          return tankWaveV[THREE.MathUtils.clamp(idx, 0, TANK_WAVE_COLS - 1)];
+        }
+
+        // 2. LIQUID PARTICLES (STARS AS WATER MOLECULES)
+        const posArr = tankStarMesh.geometry.attributes.position.array;
+
+        for (let i = 0; i < tankStarCount; i++) {
+          const i3 = i * 3;
+          let px = posArr[i3 + 0];
+          let py = posArr[i3 + 1];
+          let pz = posArr[i3 + 2];
+
+          const surfY = getSurfaceHeight(px);
+          const surfV = getSurfaceVel(px);
+
+          // Fluid depth ratio: 0.0 at floor, 1.0 at water surface
+          const depthRatio = THREE.MathUtils.clamp((py - tankFloorY) / Math.max(surfY - tankFloorY, 0.1), 0.0, 1.0);
+          const normX = (px - tankLeftX) / tankSpanX; // 0.0 to 1.0 across tank
+
+          // (A) Hydrodynamic convection vortices inside the tank
+          // Two large circulatory cells that churn water upward in the center and down at walls
+          const vortX = Math.sin(normX * Math.PI * 2.0) * Math.cos(depthRatio * Math.PI) * 0.016;
+          const vortY = -Math.cos(normX * Math.PI * 2.0) * Math.sin(depthRatio * Math.PI) * 0.016;
+
+          // (B) Slosh lateral drift: surface waves push water back and forth horizontally
+          const sloshX = surfV * (0.3 + 0.7 * depthRatio) * 0.65;
+
+          // (C) Buoyancy vs Gravity:
+          // Buoyant stars rise toward the surface; denser stars settle toward target depth
+          const targetY = tankFloorY + tankTargetLayer[i] * (surfY - tankFloorY);
+          const buoyancyForce = (targetY - py) * (0.012 + 0.025 * tankBuoyancy[i]);
+
+          // (D) Wave vertical surging: water moves vertically with the surface waves
+          const waveSurgeY = surfV * depthRatio * 0.45;
+
+          // Apply forces to particle velocities
+          tankVx[i] += vortX + sloshX;
+          tankVy[i] += vortY + buoyancyForce + waveSurgeY;
+
+          // (E) Mouse fluid stirring: pushing water when cursor moves through liquid
+          if (isMouseActive) {
+            const mdx = px - cursor3D.x;
+            const mdy = py - cursor3D.y;
+            const mDistSq = mdx * mdx + mdy * mdy;
+            if (mDistSq < 16.0) {
+              const mDist = Math.sqrt(mDistSq) + 0.001;
+              const pushFactor = (1.0 - mDist / 4.0) * 0.035;
+              tankVx[i] += (cursorVx * 0.4 + (mdx / mDist) * 0.02) * pushFactor;
+              tankVy[i] += (cursorVy * 0.4 + (mdy / mDist) * 0.02) * pushFactor;
+            }
+          }
+
+          // Viscous fluid drag (damping)
+          tankVx[i] *= 0.945;
+          tankVy[i] *= 0.945;
+          tankVz[i] *= 0.945;
+
+          // Integrate position
+          px += tankVx[i];
+          py += tankVy[i];
+          pz += tankVz[i];
+
+          // (F) SOLID BOUNDARY CONSTRAINTS (Fish Tank Glass Walls & Floor)
+          // 1. Floor collision: bounce with liquid friction
+          if (py < tankFloorY) {
+            py = tankFloorY;
+            tankVy[i] = Math.abs(tankVy[i]) * 0.25;
+            tankVx[i] *= 0.88;
+          }
+
+          // 2. Water surface boundary: buoyant stars float right on the meniscus!
+          const maxAllowedY = surfY + 0.15;
+          if (py > maxAllowedY) {
+            py = maxAllowedY;
+            tankVy[i] = -Math.abs(tankVy[i]) * 0.35; // Surface tension bounce
+          }
+
+          // 3. Left glass wall collision: bounce back into tank
+          if (px < tankLeftX) {
+            px = tankLeftX;
+            tankVx[i] = Math.abs(tankVx[i]) * 0.45;
+          }
+
+          // 4. Right glass wall collision: bounce back into tank
+          if (px > tankRightX) {
+            px = tankRightX;
+            tankVx[i] = -Math.abs(tankVx[i]) * 0.45;
+          }
+
+          // 5. Z depth boundary (aquarium front and back glass)
+          if (pz < -2.8) { pz = -2.8; tankVz[i] = Math.abs(tankVz[i]) * 0.5; }
+          if (pz > 2.8) { pz = 2.8; tankVz[i] = -Math.abs(tankVz[i]) * 0.5; }
+
+          posArr[i3 + 0] = px;
+          posArr[i3 + 1] = py;
+          posArr[i3 + 2] = pz;
+        }
+
+        tankStarMesh.geometry.attributes.position.needsUpdate = true;
+
+        // Smoothly fade in/out with scroll-driven morph progress
+        if (tankStarMesh.material.uniforms) {
+          tankStarMesh.material.uniforms.uTime.value = elapsedTime;
+          // Water becomes fully visible as you scroll to NOVA
+          const fluidOpacity = THREE.MathUtils.clamp((morphProgress - 0.15) / 0.65, 0.0, 1.0);
+          tankStarMesh.material.uniforms.uMorph.value = fluidOpacity;
+        }
       }
 
       renderer.render(scene, camera);
@@ -2241,14 +2208,12 @@
         shockwaveMesh.material.opacity = 0;
         shockwaveMesh.scale.set(0.1, 0.1, 1);
       }
-      if (dripSeaMesh) {
-        for (let i = 0; i < dripCount; i++) {
-          dripState[i] = 0;
-          dripAlphas[i] = 0.0;
-          dripPositions[i * 3 + 1] = -9999;
-        }
-        dripSeaMesh.geometry.attributes.position.needsUpdate = true;
-        dripSeaMesh.geometry.attributes.aAlpha.needsUpdate = true;
+      if (tankStarMesh && tankStarMesh.material.uniforms) {
+        tankStarMesh.material.uniforms.uMorph.value = 0.0;
+      }
+      for (let w = 0; w < TANK_WAVE_COLS; w++) {
+        tankWaveH[w] = 0;
+        tankWaveV[w] = 0;
       }
 
       // Reset window scroll & hide makeshift navbar
