@@ -806,7 +806,7 @@
     // 3. THREE.JS COSMIC SCENE: 3D MINERAL SAND GRAIN & SUPERNOVA EXPLOSION
     // ----------------------------------------------------
     let scene, camera, renderer;
-    let galaxyMesh, galaxyCoreMesh, starfieldMesh, silhouettePlanetMesh;
+    let galaxyMesh, galaxyCoreMesh, starfieldMesh;
     let darkPlanetGroup = null;
     let darkPlanetCoreMesh = null;
     let darkPlanetRingsMesh = null;
@@ -1594,29 +1594,10 @@
       starfieldMesh = new THREE.Points(bgGeo, bgMat);
       scene.add(starfieldMesh);
 
-      // 6b. 3D-LIKE SILHOUETTE PLANET WITH RINGS (Positioned behind NOVA and Star Bed)
-      const planetGeo = new THREE.PlaneGeometry(48.0, 48.0);
-      const planetTexture = new THREE.TextureLoader().load('assets/planet_rings.png');
-      planetTexture.generateMipmaps = true;
-      planetTexture.minFilter = THREE.LinearMipmapLinearFilter;
-
-      const planetMat = new THREE.MeshBasicMaterial({
-        map: planetTexture,
-        transparent: true,
-        opacity: 0.0,
-        depthWrite: false
-      });
-
-      silhouettePlanetMesh = new THREE.Mesh(planetGeo, planetMat);
-      silhouettePlanetMesh.position.set(-1.0, 0.8, -16.0); // Behind NOVA (z = 0) and Star Bed (z = 0)
-      silhouettePlanetMesh.renderOrder = -5; // Physical depth rendering behind stars
-      silhouettePlanetMesh.visible = false;
-      scene.add(silhouettePlanetMesh);
-
-      // 6d. MCP WASM SYNTHESIZED 3D DARK PLANET WITH RINGS (Top-Right Addon)
+      // 6b. MCP WASM SYNTHESIZED 3D DARK PLANET WITH RINGS (Colossal Backlit Eclipse)
       darkPlanetGroup = new THREE.Group();
       darkPlanetGroup.position.copy(darkPlanetBasePos);
-      darkPlanetGroup.renderOrder = 20;
+      darkPlanetGroup.renderOrder = -5; // Behind NOVA (z = 0) and Star Bed (z = 0)
       darkPlanetGroup.visible = false;
       scene.add(darkPlanetGroup);
 
@@ -1707,10 +1688,8 @@
         vertexShader: `
           varying vec3 vWorldPosition;
           varying vec3 vLocalPosition;
-          varying vec3 vNormal;
           void main() {
             vLocalPosition = position;
-            vNormal = normalize(normalMatrix * normal);
             vec4 worldPos = modelMatrix * vec4(position, 1.0);
             vWorldPosition = worldPos.xyz;
             gl_Position = projectionMatrix * viewMatrix * worldPos;
@@ -2463,30 +2442,8 @@
       // ----------------------------------------------------
       // 3D SILHOUETTE PLANET WITH RINGS (Behind NOVA and Star Bed)
       // ----------------------------------------------------
-      if (silhouettePlanetMesh && silhouettePlanetMesh.material) {
-        if (introComplete && morphProgress > 0.02) {
-          // Smoothly blooms into view as you scroll to NOVA
-          const rawP = THREE.MathUtils.clamp((morphProgress - 0.06) / 0.65, 0.0, 1.0);
-          const planetAlpha = rawP * rawP * (3.0 - 2.0 * rawP);
-
-          if (planetAlpha > 0.001) {
-            silhouettePlanetMesh.visible = true;
-            silhouettePlanetMesh.material.opacity = planetAlpha * 0.98;
-            // Subtle, majestic celestial rotation and orbital breathing
-            silhouettePlanetMesh.rotation.z = -0.10 + Math.sin(elapsedTime * 0.12) * 0.015;
-            silhouettePlanetMesh.position.y = 0.8 + Math.sin(elapsedTime * 0.20) * 0.20;
-          } else {
-            silhouettePlanetMesh.visible = false;
-            silhouettePlanetMesh.material.opacity = 0.0;
-          }
-        } else {
-          silhouettePlanetMesh.visible = false;
-          silhouettePlanetMesh.material.opacity = 0.0;
-        }
-      }
-
       // ----------------------------------------------------
-      // MCP WASM 3D DARK PLANET WITH RINGS (Top-Right Addon)
+      // MCP WASM 3D DARK PLANET WITH RINGS (Colossal Backlit Eclipse)
       // ----------------------------------------------------
       if (darkPlanetGroup) {
         if (introComplete) {
@@ -2504,6 +2461,7 @@
               darkPlanetRingsMesh.material.uniforms.uOpacity.value = planetAlpha;
               darkPlanetRingsMesh.rotation.z += 0.0010 * darkPlanetSpeedMult;
               darkPlanetRingsMesh.material.uniforms.uPlanetCenter.value.copy(darkPlanetGroup.position);
+              darkPlanetRingsMesh.material.uniforms.uPlanetRadius.value = 12.0 * darkPlanetGroup.scale.x;
             }
             if (darkPlanetWireframeMesh && darkPlanetWireframeMesh.visible) {
               darkPlanetWireframeMesh.rotation.y += 0.0022 * darkPlanetSpeedMult;
@@ -2513,8 +2471,8 @@
             if (!isCameraFocusedOnPlanet) {
               darkPlanetGroup.position.y = darkPlanetBasePos.y + Math.sin(elapsedTime * 0.22) * 0.35;
               darkPlanetGroup.position.x = darkPlanetBasePos.x + Math.cos(elapsedTime * 0.16) * 0.22;
-              darkPlanetGroup.rotation.y = (mouseX * 0.04);
-              darkPlanetGroup.rotation.x = -(mouseY * 0.025);
+              darkPlanetGroup.rotation.y = (mouse2D.x * 0.04);
+              darkPlanetGroup.rotation.x = -(mouse2D.y * 0.025);
             }
           }
         } else {
@@ -2588,10 +2546,13 @@
           starBedMesh.material.uniforms.uMorph.value = 0.0;
         }
       }
-      if (silhouettePlanetMesh) {
-        silhouettePlanetMesh.visible = false;
-        if (silhouettePlanetMesh.material) {
-          silhouettePlanetMesh.material.opacity = 0.0;
+      if (darkPlanetGroup) {
+        darkPlanetGroup.visible = false;
+        if (darkPlanetCoreMesh && darkPlanetCoreMesh.material.uniforms) {
+          darkPlanetCoreMesh.material.uniforms.uOpacity.value = 0.0;
+        }
+        if (darkPlanetRingsMesh && darkPlanetRingsMesh.material.uniforms) {
+          darkPlanetRingsMesh.material.uniforms.uOpacity.value = 0.0;
         }
       }
 
