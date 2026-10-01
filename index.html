@@ -820,8 +820,6 @@
     let darkPlanetSpeedMult = 1.0;
     let isDarkPlanetWireframe = false;
     let isCameraFocusedOnPlanet = false;
-    let celestialPlanetsGroup = null;
-    const celestialPlanets = [];
     let nebulaCloudsGroup = null;
     let positions, homePositions, velocities, fluidOffsets, colors, sizes, twinkles;
     let homeRadii, homeAngles, homeZ;
@@ -1244,6 +1242,9 @@
       colors = new Float32Array(starCount * 3);
       sizes = new Float32Array(starCount);
       twinkles = new Float32Array(starCount);
+      const types = new Float32Array(starCount);
+      const planetAngles = new Float32Array(starCount);
+      const planetSeeds = new Float32Array(starCount);
       homeRadii = new Float32Array(starCount);
       homeAngles = new Float32Array(starCount);
       homeZ = new Float32Array(starCount);
@@ -1361,8 +1362,40 @@
         colors[i3 + 1] = col.g;
         colors[i3 + 2] = col.b;
 
-        sizes[i] = starSize;
         twinkles[i] = Math.random() * 100.0;
+
+        // Mix celestial planets directly into the stars of the spiral and NOVA constellation
+        const isCore = i < coreCount;
+        const planetProb = isCore ? 0.01 : 0.048;
+        const isPlanet = (Math.random() < planetProb);
+
+        if (isPlanet) {
+          const roll = Math.random();
+          let pType;
+          if (roll < 0.28) pType = 2.0;      // Saturn-like ringed gas giant
+          else if (roll < 0.50) pType = 1.0; // Earth-like Gaia (oceans, continents, clouds)
+          else if (roll < 0.68) pType = 3.0; // Jupiter-like striped gas giant with storm
+          else if (roll < 0.82) pType = 4.0; // Mars-like volcanic rocky planet
+          else if (roll < 0.92) pType = 5.0; // Neptune-like azure ice giant with cyan rings
+          else pType = 6.0;                  // Nebula iridescent world
+
+          types[i] = pType;
+          planetAngles[i] = Math.random() * Math.PI * 2.0;
+          planetSeeds[i] = Math.random() * 20.0;
+
+          if (pType === 2.0 || pType === 5.0) {
+            sizes[i] = 5.2 + Math.random() * 1.8;
+          } else if (pType === 3.0) {
+            sizes[i] = 4.4 + Math.random() * 1.4;
+          } else {
+            sizes[i] = 3.2 + Math.random() * 1.1;
+          }
+        } else {
+          types[i] = 0.0;
+          planetAngles[i] = 0.0;
+          planetSeeds[i] = 0.0;
+          sizes[i] = starSize;
+        }
       }
 
       const galaxyGeo = new THREE.BufferGeometry();
@@ -1370,11 +1403,15 @@
       galaxyGeo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
       galaxyGeo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
       galaxyGeo.setAttribute('aTwinkle', new THREE.BufferAttribute(twinkles, 1));
+      galaxyGeo.setAttribute('aType', new THREE.BufferAttribute(types, 1));
+      galaxyGeo.setAttribute('aPlanetAngle', new THREE.BufferAttribute(planetAngles, 1));
+      galaxyGeo.setAttribute('aPlanetSeed', new THREE.BufferAttribute(planetSeeds, 1));
 
       const galaxyMat = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
-          uMorph: { value: 0.0 }
+          uMorph: { value: 0.0 },
+          uSunDirection: { value: new THREE.Vector3(0.6, 0.7, 0.5) }
         },
         vertexShader: `
           uniform float uTime;
@@ -1382,60 +1419,199 @@
           attribute vec3 aColor;
           attribute float aSize;
           attribute float aTwinkle;
+          attribute float aType;
+          attribute float aPlanetAngle;
+          attribute float aPlanetSeed;
           varying vec3 vColor;
-          varying float vAlpha;
           varying float vSize;
+          varying float vAlpha;
+          varying float vType;
+          varying float vPlanetAngle;
+          varying float vPlanetSeed;
 
           void main() {
             vColor = aColor;
             vSize = aSize;
+            vType = aType;
+            vPlanetAngle = aPlanetAngle;
+            vPlanetSeed = aPlanetSeed;
             vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
             gl_Position = projectionMatrix * mvPos;
 
             float twSpeed = mix(2.5, 1.2, clamp(aSize / 15.0, 0.0, 1.0));
-            float tw = 0.82 + 0.18 * sin(uTime * twSpeed + aTwinkle);
+            float tw = (aType > 0.5) ? 1.0 : (0.82 + 0.18 * sin(uTime * twSpeed + aTwinkle));
             float sizeBoost = mix(1.0, 1.35, clamp(aSize / 15.0, 0.0, 1.0));
-            
-            // Constellation luminance boost when assembled into NOVA
-            float morphAlpha = mix(1.0, 1.22, uMorph);
+            float morphAlpha = mix(1.0, 1.25, uMorph);
             vAlpha = tw * clamp((position.z + 50.0) / 60.0, 0.4, 1.0) * sizeBoost * morphAlpha;
 
-            // Constellation star size boost when assembled
-            float morphSize = mix(1.0, 1.30, uMorph);
+            // In NOVA, stars get a slight size boost to maintain glowing constellation look
+            float morphSize = (aType > 0.5) ? 1.0 : mix(1.0, 1.32, uMorph);
             gl_PointSize = aSize * (150.0 / -mvPos.z) * tw * morphSize;
           }
         `,
         fragmentShader: `
+          uniform float uTime;
+          uniform float uMorph;
+          uniform vec3 uSunDirection;
           varying vec3 vColor;
-          varying float vAlpha;
           varying float vSize;
+          varying float vAlpha;
+          varying float vType;
+          varying float vPlanetAngle;
+          varying float vPlanetSeed;
 
           void main() {
             vec2 coord = gl_PointCoord - vec2(0.5);
             float dist = length(coord);
-            if (dist > 0.5) discard;
 
-            float core = smoothstep(0.24, 0.0, dist);
-            float glow = exp(-dist * 9.5);
-            float edge = smoothstep(0.5, 0.15, dist);
+            // 1. STAR RENDERING (vType < 0.5)
+            if (vType < 0.5) {
+              if (dist > 0.5) discard;
+              float core = smoothstep(0.24, 0.0, dist);
+              float glow = exp(-dist * 9.5);
+              float edge = smoothstep(0.5, 0.15, dist);
 
-            float spike = 0.0;
-            if (vSize > 7.0) {
-              float spikeIntensity = clamp((vSize - 7.0) / 8.0, 0.0, 1.0);
-              float spikeX = exp(-abs(coord.x) * 36.0) * exp(-abs(coord.y) * 4.0);
-              float spikeY = exp(-abs(coord.y) * 36.0) * exp(-abs(coord.x) * 4.0);
-              spike = max(spikeX, spikeY) * 0.65 * spikeIntensity;
+              float spike = 0.0;
+              if (vSize > 6.0) {
+                float spikeIntensity = clamp((vSize - 6.0) / 7.0, 0.0, 1.0);
+                float spikeX = exp(-abs(coord.x) * 36.0) * exp(-abs(coord.y) * 4.0);
+                float spikeY = exp(-abs(coord.y) * 36.0) * exp(-abs(coord.x) * 4.0);
+                spike = max(spikeX, spikeY) * 0.65 * spikeIntensity;
+              }
+
+              // In NOVA, stars shine with brilliant crystalline core
+              float morphWhite = mix(0.92, 1.0, uMorph);
+              vec3 finalColor = mix(vColor, vec3(1.0, 1.0, 1.0), core * morphWhite + spike * 0.5);
+              float alpha = clamp((core * 0.90 + glow * 0.58 + spike) * edge * vAlpha, 0.0, 1.0);
+              gl_FragColor = vec4(finalColor, alpha);
+              return;
             }
 
-            vec3 finalColor = mix(vColor, vec3(1.0, 1.0, 1.0), core * 0.92 + spike * 0.5);
-            float alpha = clamp((core * 0.88 + glow * 0.55 + spike) * edge * vAlpha, 0.0, 1.0);
+            // 2. PLANET RENDERING (vType >= 0.5)
+            // Types: 1=Earth, 2=Saturn ringed, 3=Jupiter, 4=Mars rocky, 5=Neptune ringed, 6=Nebula world
+            bool hasRings = (abs(vType - 2.0) < 0.4 || abs(vType - 5.0) < 0.4);
+            float rSphere = hasRings ? 0.22 : 0.42;
 
-            gl_FragColor = vec4(finalColor, alpha);
+            float ca = cos(vPlanetAngle);
+            float sa = sin(vPlanetAngle);
+            vec2 rCoord = vec2(coord.x * ca - coord.y * sa, coord.x * sa + coord.y * ca);
+
+            float ringDist = length(vec2(rCoord.x, rCoord.y * 2.8));
+            bool onRing = hasRings && (ringDist >= 0.26 && ringDist <= 0.49);
+            bool inRingGap = hasRings && (ringDist > 0.38 && ringDist < 0.41);
+            if (inRingGap) onRing = false;
+
+            bool onSphere = (dist <= rSphere);
+
+            if (!onSphere && !onRing) {
+              if (abs(vType - 1.0) < 0.4 && dist <= 0.48) {
+                float atmo = smoothstep(0.48, 0.42, dist) * 0.45 * vAlpha;
+                gl_FragColor = vec4(vec3(0.25, 0.75, 1.0), atmo);
+                return;
+              }
+              if (abs(vType - 6.0) < 0.4 && dist <= 0.48) {
+                float atmo = smoothstep(0.48, 0.42, dist) * 0.40 * vAlpha;
+                gl_FragColor = vec4(vec3(0.85, 0.35, 0.95), atmo);
+                return;
+              }
+              discard;
+            }
+
+            bool renderRing = onRing && (!onSphere || rCoord.y > 0.0);
+
+            if (renderRing) {
+              vec3 ringCol;
+              if (abs(vType - 2.0) < 0.4) {
+                float aRing = smoothstep(0.41, 0.49, ringDist);
+                ringCol = mix(vec3(0.95, 0.86, 0.70), vec3(0.82, 0.76, 0.65), aRing);
+                ringCol += 0.06 * sin(ringDist * 140.0);
+              } else {
+                ringCol = vec3(0.55, 0.88, 1.0) + 0.08 * sin(ringDist * 160.0);
+              }
+              if (rCoord.y < 0.0 && abs(rCoord.x) < rSphere * 1.15) {
+                ringCol *= 0.15;
+              }
+              gl_FragColor = vec4(ringCol, 0.95 * vAlpha);
+              return;
+            }
+
+            // Raytrace 3D Sphere Surface
+            float z = sqrt(max(0.0, rSphere * rSphere - dist * dist));
+            vec3 norm = normalize(vec3(coord.x, -coord.y, z));
+
+            vec3 sunDir = normalize(uSunDirection);
+            float NdotL = dot(norm, sunDir);
+            float dayLight = smoothstep(-0.25, 0.35, NdotL);
+            float light = mix(0.22, 1.0, dayLight);
+            float rim = pow(1.0 - norm.z, 2.5);
+
+            float lat = asin(clamp(norm.y, -1.0, 1.0));
+            float lon = atan(norm.x, norm.z) + uTime * 0.15 + vPlanetSeed;
+
+            vec3 surfColor = vec3(0.5);
+
+            if (abs(vType - 1.0) < 0.4) {
+              // 1. Earth-like Gaia (deep blue oceans, continents, clouds, polar ice)
+              float continent = sin(lon * 2.5 + sin(lat * 3.5) * 1.5) + cos(lon * 4.0 - cos(lat * 2.5) * 1.2) + 0.5 * sin(lon * 8.0 + lat * 7.0);
+              bool isIce = (abs(lat) > 1.20);
+              bool isLand = (continent > 0.12) && !isIce;
+              if (isIce) {
+                surfColor = vec3(0.95, 0.98, 1.0);
+              } else if (isLand) {
+                surfColor = (continent > 0.40) ? vec3(0.60, 0.48, 0.32) : vec3(0.16, 0.58, 0.26);
+              } else if (continent > -0.05) {
+                surfColor = vec3(0.10, 0.70, 0.84);
+              } else {
+                surfColor = vec3(0.05, 0.22, 0.62);
+              }
+              float clouds = smoothstep(0.48, 0.75, sin(lon * 5.0 + lat * 8.0 + uTime * 0.22) * cos(lon * 7.0 - lat * 4.0));
+              surfColor = mix(surfColor, vec3(1.0, 1.0, 1.0), clouds * 0.85);
+              surfColor += vec3(0.20, 0.70, 1.0) * rim * 0.60;
+
+            } else if (abs(vType - 2.0) < 0.4) {
+              // 2. Saturn-like Ringed Gas Giant
+              float band = sin(lat * 22.0 + sin(lat * 40.0) * 0.3) * 0.5 + 0.5;
+              surfColor = mix(vec3(0.90, 0.72, 0.50), vec3(0.98, 0.94, 0.82), band);
+              surfColor += vec3(0.05 * sin(lon * 3.0 + lat * 12.0));
+              surfColor += vec3(0.94, 0.84, 0.65) * rim * 0.40;
+
+            } else if (abs(vType - 3.0) < 0.4) {
+              // 3. Jupiter-like Striped Gas Giant with Great Red Spot
+              float jBands = sin(lat * 28.0 + sin(lon * 4.0 + lat * 12.0) * 0.4) * 0.5 + 0.5;
+              surfColor = mix(vec3(0.82, 0.42, 0.24), vec3(0.97, 0.88, 0.70), jBands);
+              float stormDist = length(vec2((lon - 2.8) * 1.5, lat + 0.30));
+              float storm = smoothstep(0.22, 0.05, stormDist);
+              surfColor = mix(surfColor, vec3(0.90, 0.26, 0.17), storm * 0.85);
+
+            } else if (abs(vType - 4.0) < 0.4) {
+              // 4. Mars-like Volcanic Rocky Planet
+              float crater = sin(lon * 7.0 + lat * 6.0) * cos(lon * 11.0 - lat * 8.0);
+              vec3 mBase = mix(vec3(0.80, 0.32, 0.16), vec3(0.46, 0.22, 0.12), smoothstep(-0.2, 0.4, crater));
+              float mIce = smoothstep(1.18, 1.30, abs(lat));
+              surfColor = mix(mBase, vec3(0.95, 0.95, 0.95), mIce);
+
+            } else if (abs(vType - 5.0) < 0.4) {
+              // 5. Neptune Ice Giant
+              float nBands = sin(lat * 24.0) * 0.5 + 0.5;
+              surfColor = mix(vec3(0.10, 0.32, 0.80), vec3(0.08, 0.70, 0.90), nBands);
+              float nCirrus = smoothstep(0.65, 0.85, sin(lon * 8.0 + lat * 18.0));
+              surfColor = mix(surfColor, vec3(0.90, 0.97, 1.0), nCirrus * 0.55);
+              surfColor += vec3(0.15, 0.85, 1.0) * rim * 0.50;
+
+            } else {
+              // 6. Nebula Multicolour World
+              float nSwirl = sin(lon * 3.5 + sin(lat * 16.0) * 2.0) * 0.5 + 0.5;
+              surfColor = mix(vec3(0.90, 0.18, 0.60), vec3(0.52, 0.26, 0.96), nSwirl);
+              surfColor += vec3(0.70, 0.38, 0.98) * rim * 0.45;
+            }
+
+            vec3 finalPlanet = surfColor * light;
+            gl_FragColor = vec4(finalPlanet, 0.98 * vAlpha);
           }
         `,
         transparent: true,
         depthWrite: false,
-        blending: THREE.AdditiveBlending
+        blending: THREE.NormalBlending
       });
 
       galaxyMesh = new THREE.Points(galaxyGeo, galaxyMat);
@@ -1681,385 +1857,7 @@
       }
       scene.add(nebulaCloudsGroup);
 
-      // ====================================================
-      // 6. MEDIUM CELESTIAL PLANETS WITH RINGS, TEXTURES & CLOUDS
-      // ====================================================
-      celestialPlanetsGroup = new THREE.Group();
-      celestialPlanetsGroup.visible = false;
-      scene.add(celestialPlanetsGroup);
-
-      // 6a. KRONOS-IV (Golden-Amber Saturn-like Ringed Gas Giant)
-      const kronosCanvas = document.createElement('canvas');
-      kronosCanvas.width = 512; kronosCanvas.height = 256;
-      const kctx = kronosCanvas.getContext('2d');
-      const kImg = kctx.createImageData(512, 256);
-      const kData = kImg.data;
-      for (let y = 0; y < 256; y++) {
-        const v = y / 256;
-        const lat = (v - 0.5) * Math.PI;
-        const band1 = Math.sin(lat * 16.0 + Math.sin(lat * 32.0) * 0.4);
-        const band2 = Math.sin(lat * 46.0) * 0.22;
-        const b = (band1 + band2) * 0.5 + 0.5;
-        const polar = Math.max(0.0, (Math.abs(lat) - 1.1) / 0.47);
-        for (let x = 0; x < 512; x++) {
-          const u = x / 512;
-          const lon = u * Math.PI * 2.0;
-          const storm = Math.exp(-Math.pow((lat - 0.35) / 0.08, 2.0) - Math.pow((lon - 3.8) / 0.35, 2.0));
-          const r = Math.min(255, Math.floor((228 * b + 27) * (1.0 - polar * 0.35) + storm * 35));
-          const g = Math.min(255, Math.floor((178 * b + 38) * (1.0 - polar * 0.40) + storm * 45));
-          const bl = Math.min(255, Math.floor((115 * b + 48) * (1.0 - polar * 0.45) + storm * 55));
-          const idx = (y * 512 + x) * 4;
-          kData[idx] = r; kData[idx+1] = g; kData[idx+2] = bl; kData[idx+3] = 255;
-        }
-      }
-      kctx.putImageData(kImg, 0, 0);
-      const kronosTex = new THREE.CanvasTexture(kronosCanvas);
-
-      // Saturn Ring Texture
-      const kRingCanvas = document.createElement('canvas');
-      kRingCanvas.width = 512; kRingCanvas.height = 32;
-      const krctx = kRingCanvas.getContext('2d');
-      const krGrad = krctx.createLinearGradient(0, 0, 512, 0);
-      krGrad.addColorStop(0.0, 'rgba(0, 0, 0, 0)');
-      krGrad.addColorStop(0.08, 'rgba(180, 140, 90, 0.3)'); // C-ring
-      krGrad.addColorStop(0.24, 'rgba(235, 205, 150, 0.95)'); // B-ring inner
-      krGrad.addColorStop(0.58, 'rgba(250, 230, 185, 1.0)'); // B-ring outer
-      krGrad.addColorStop(0.66, 'rgba(15, 10, 5, 0.05)'); // Cassini Division gap
-      krGrad.addColorStop(0.72, 'rgba(215, 195, 160, 0.85)'); // A-ring inner
-      krGrad.addColorStop(0.86, 'rgba(30, 20, 10, 0.1)'); // Encke Gap
-      krGrad.addColorStop(0.92, 'rgba(205, 185, 150, 0.75)'); // A-ring outer
-      krGrad.addColorStop(0.98, 'rgba(160, 140, 110, 0.3)'); // F-ringlet
-      krGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
-      krctx.fillStyle = krGrad;
-      krctx.fillRect(0, 0, 512, 32);
-      const kronosRingTex = new THREE.CanvasTexture(kRingCanvas);
-
-      const kronosGroup = new THREE.Group();
-      kronosGroup.position.set(-28.0, 13.5, -24.0);
-      const kronosGeo = new THREE.SphereGeometry(2.7, 40, 40);
-      const kronosMat = new THREE.MeshStandardMaterial({
-        map: kronosTex,
-        color: new THREE.Color(0xfff2d6),
-        emissive: new THREE.Color(0x352005),
-        roughness: 0.55,
-        metalness: 0.08
-      });
-      const kronosMesh = new THREE.Mesh(kronosGeo, kronosMat);
-      kronosGroup.add(kronosMesh);
-
-      const kRingGeo = new THREE.RingGeometry(3.6, 7.2, 96);
-      const kRingMat = new THREE.MeshStandardMaterial({
-        map: kronosRingTex,
-        color: new THREE.Color(0xffe8ba),
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.92,
-        roughness: 0.50,
-        depthWrite: false
-      });
-      const kronosRingMesh = new THREE.Mesh(kRingGeo, kRingMat);
-      kronosRingMesh.rotation.x = Math.PI * 0.38;
-      kronosRingMesh.rotation.y = Math.PI * 0.12;
-      kronosRingMesh.rotation.z = -Math.PI * 0.18;
-      kronosGroup.add(kronosRingMesh);
-
-      celestialPlanetsGroup.add(kronosGroup);
-      celestialPlanets.push({
-        group: kronosGroup,
-        mesh: kronosMesh,
-        rotSpeed: 0.0016,
-        basePos: new THREE.Vector3(-28.0, 13.5, -24.0),
-        driftPhase: 0.0
-      });
-
-      // 6b. GAIA PRIME (Earth-like Ocean & Continent World with Swirling Cloud Deck)
-      const gaiaCanvas = document.createElement('canvas');
-      gaiaCanvas.width = 512; gaiaCanvas.height = 256;
-      const gctx = gaiaCanvas.getContext('2d');
-      const gImg = gctx.createImageData(512, 256);
-      const gData = gImg.data;
-      for (let y = 0; y < 256; y++) {
-        const lat = (y / 256 - 0.5) * Math.PI;
-        for (let x = 0; x < 512; x++) {
-          const lon = (x / 512) * Math.PI * 2.0;
-          const n1 = Math.sin(lon * 2.0 + Math.sin(lat * 3.0) * 1.5);
-          const n2 = Math.cos(lon * 3.5 - Math.cos(lat * 2.0) * 1.2);
-          const n3 = Math.sin(lon * 7.0 + lat * 5.0) * 0.4;
-          const n4 = Math.cos(lon * 14.0 - lat * 11.0) * 0.2;
-          const elev = (n1 + n2 + n3 + n4) / 2.6;
-          const idx = (y * 512 + x) * 4;
-          const isIce = Math.abs(lat) > 1.25;
-          if (isIce) {
-            gData[idx] = 240; gData[idx+1] = 248; gData[idx+2] = 255; gData[idx+3] = 255;
-          } else if (elev > 0.08) {
-            // Continents
-            if (elev > 0.38) {
-              // Alpine snow & rock
-              gData[idx] = 135; gData[idx+1] = 110; gData[idx+2] = 90; gData[idx+3] = 255;
-            } else if (elev > 0.24) {
-              // Savannah / Steppes
-              gData[idx] = 145; gData[idx+1] = 165; gData[idx+2] = 45; gData[idx+3] = 255;
-            } else {
-              // Rainforest
-              gData[idx] = 28; gData[idx+1] = 135; gData[idx+2] = 58; gData[idx+3] = 255;
-            }
-          } else if (elev > -0.04) {
-            // Coastal turquoise shelf
-            gData[idx] = 14; gData[idx+1] = 175; gData[idx+2] = 205; gData[idx+3] = 255;
-          } else {
-            // Deep sapphire ocean
-            gData[idx] = 10; gData[idx+1] = 45; gData[idx+2] = 130; gData[idx+3] = 255;
-          }
-        }
-      }
-      gctx.putImageData(gImg, 0, 0);
-      const gaiaTex = new THREE.CanvasTexture(gaiaCanvas);
-
-      // Earth Cloud Texture (Transparent background with cyclonic storms)
-      const cloudCanvas = document.createElement('canvas');
-      cloudCanvas.width = 512; cloudCanvas.height = 256;
-      const cldCtx = cloudCanvas.getContext('2d');
-      const cldImg = cldCtx.createImageData(512, 256);
-      const cldData = cldImg.data;
-      for (let y = 0; y < 256; y++) {
-        const lat = (y / 256 - 0.5) * Math.PI;
-        for (let x = 0; x < 512; x++) {
-          const lon = (x / 512) * Math.PI * 2.0;
-          const cn1 = Math.sin(lon * 4.0 + Math.sin(lat * 8.0) * 2.2);
-          const cn2 = Math.cos(lon * 6.5 - lat * 5.0);
-          const cn3 = Math.sin(lon * 12.0 + lat * 14.0) * 0.4;
-          const cElev = (cn1 + cn2 + cn3) / 2.2;
-          const eqBelt = Math.exp(-Math.pow(lat / 0.22, 2.0)) * 0.65;
-          const stormVal = Math.max(0.0, cElev * 0.6 + eqBelt - 0.15);
-          const alpha = Math.min(255, Math.floor(stormVal * 255 * 1.3));
-          const idx = (y * 512 + x) * 4;
-          cldData[idx] = 255; cldData[idx+1] = 255; cldData[idx+2] = 255; cldData[idx+3] = alpha;
-        }
-      }
-      cldCtx.putImageData(cldImg, 0, 0);
-      const gaiaCloudsTex = new THREE.CanvasTexture(cloudCanvas);
-
-      const gaiaGroup = new THREE.Group();
-      gaiaGroup.position.set(24.0, 14.0, -20.0);
-      const gaiaGeo = new THREE.SphereGeometry(2.0, 40, 40);
-      const gaiaMat = new THREE.MeshStandardMaterial({ map: gaiaTex, roughness: 0.50, metalness: 0.05 });
-      const gaiaMesh = new THREE.Mesh(gaiaGeo, gaiaMat);
-      gaiaGroup.add(gaiaMesh);
-
-      const gaiaCloudsGeo = new THREE.SphereGeometry(2.035, 40, 40);
-      const gaiaCloudsMat = new THREE.MeshStandardMaterial({
-        map: gaiaCloudsTex,
-        transparent: true,
-        opacity: 0.85,
-        roughness: 0.88,
-        depthWrite: false
-      });
-      const gaiaCloudsMesh = new THREE.Mesh(gaiaCloudsGeo, gaiaCloudsMat);
-      gaiaGroup.add(gaiaCloudsMesh);
-
-      // Cyan Rayleigh atmospheric scattering rim glow
-      const gaiaHaloCanvas = document.createElement('canvas');
-      gaiaHaloCanvas.width = 128; gaiaHaloCanvas.height = 128;
-      const ghctx = gaiaHaloCanvas.getContext('2d');
-      const ghGrad = ghctx.createRadialGradient(64, 64, 46, 64, 64, 64);
-      ghGrad.addColorStop(0.0, 'rgba(56, 189, 248, 0.70)');
-      ghGrad.addColorStop(0.45, 'rgba(14, 165, 233, 0.35)');
-      ghGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
-      ghctx.fillStyle = ghGrad;
-      ghctx.fillRect(0, 0, 128, 128);
-      const gaiaHaloTex = new THREE.CanvasTexture(gaiaHaloCanvas);
-      const gaiaHaloMat = new THREE.SpriteMaterial({ map: gaiaHaloTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-      const gaiaHalo = new THREE.Sprite(gaiaHaloMat);
-      gaiaHalo.scale.set(5.2, 5.2, 1);
-      gaiaGroup.add(gaiaHalo);
-
-      celestialPlanetsGroup.add(gaiaGroup);
-      celestialPlanets.push({
-        group: gaiaGroup,
-        mesh: gaiaMesh,
-        cloudsMesh: gaiaCloudsMesh,
-        rotSpeed: 0.0010,
-        cloudsRotSpeed: 0.0019,
-        basePos: new THREE.Vector3(24.0, 14.0, -20.0),
-        driftPhase: 1.2
-      });
-
-      // 6c. AETHELGARD (Azure Neptune/Uranus-like Ice Giant with Steep Rings)
-      const aethelCanvas = document.createElement('canvas');
-      aethelCanvas.width = 512; aethelCanvas.height = 256;
-      const actx = aethelCanvas.getContext('2d');
-      const aImg = actx.createImageData(512, 256);
-      const aData = aImg.data;
-      for (let y = 0; y < 256; y++) {
-        const v = y / 256;
-        const lat = (v - 0.5) * Math.PI;
-        const band = Math.sin(lat * 18.0 + Math.sin(lat * 36.0) * 0.3);
-        const b = band * 0.5 + 0.5;
-        for (let x = 0; x < 512; x++) {
-          const u = x / 512;
-          const lon = u * Math.PI * 2.0;
-          const darkSpot = Math.exp(-Math.pow((lat - 0.28) / 0.12, 2.0) - Math.pow((lon - 2.5) / 0.45, 2.0));
-          const cirrus = Math.exp(-Math.pow((lat - 0.38) / 0.04, 2.0) - Math.pow((lon - 2.9) / 0.65, 2.0));
-          const r = Math.min(255, Math.floor(18 * b + 8 - darkSpot * 14 + cirrus * 180));
-          const g = Math.min(255, Math.floor(130 * b + 45 - darkSpot * 30 + cirrus * 190));
-          const bl = Math.min(255, Math.floor(190 * b + 65 - darkSpot * 40 + cirrus * 200));
-          const idx = (y * 512 + x) * 4;
-          aData[idx] = r; aData[idx+1] = g; aData[idx+2] = bl; aData[idx+3] = 255;
-        }
-      }
-      actx.putImageData(aImg, 0, 0);
-      const aethelTex = new THREE.CanvasTexture(aethelCanvas);
-
-      // Azure Thin Ice Rings
-      const aRingCanvas = document.createElement('canvas');
-      aRingCanvas.width = 256; aRingCanvas.height = 32;
-      const arctx = aRingCanvas.getContext('2d');
-      const arGrad = arctx.createLinearGradient(0, 0, 256, 0);
-      arGrad.addColorStop(0.0, 'rgba(0,0,0,0)');
-      arGrad.addColorStop(0.20, 'rgba(165, 243, 252, 0.75)');
-      arGrad.addColorStop(0.48, 'rgba(6, 182, 212, 0.85)');
-      arGrad.addColorStop(0.60, 'rgba(0,0,0,0)');
-      arGrad.addColorStop(0.75, 'rgba(147, 197, 253, 0.65)');
-      arGrad.addColorStop(1.0, 'rgba(0,0,0,0)');
-      arctx.fillStyle = arGrad;
-      arctx.fillRect(0, 0, 256, 32);
-      const aethelRingTex = new THREE.CanvasTexture(aRingCanvas);
-
-      const aethelGroup = new THREE.Group();
-      aethelGroup.position.set(-26.0, -12.5, -18.0);
-      const aethelGeo = new THREE.SphereGeometry(2.3, 40, 40);
-      const aethelMat = new THREE.MeshStandardMaterial({
-        map: aethelTex,
-        color: new THREE.Color(0xd0f4ff),
-        emissive: new THREE.Color(0x06283d),
-        roughness: 0.50,
-        metalness: 0.10
-      });
-      const aethelMesh = new THREE.Mesh(aethelGeo, aethelMat);
-      aethelGroup.add(aethelMesh);
-
-      const aRingGeo = new THREE.RingGeometry(3.0, 5.0, 80);
-      const aRingMat = new THREE.MeshStandardMaterial({
-        map: aethelRingTex,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.85,
-        roughness: 0.45,
-        depthWrite: false
-      });
-      const aethelRingMesh = new THREE.Mesh(aRingGeo, aRingMat);
-      aethelRingMesh.rotation.x = Math.PI * 0.38;
-      aethelRingMesh.rotation.y = Math.PI * 0.22;
-      aethelRingMesh.rotation.z = Math.PI * 0.45;
-      aethelGroup.add(aethelRingMesh);
-
-      celestialPlanetsGroup.add(aethelGroup);
-      celestialPlanets.push({
-        group: aethelGroup,
-        mesh: aethelMesh,
-        rotSpeed: 0.0014,
-        basePos: new THREE.Vector3(-26.0, -12.5, -18.0),
-        driftPhase: 2.5
-      });
-
-      // 6d. ARES VULKAN (Mars / Volcanic Terrestrial World)
-      const aresCanvas = document.createElement('canvas');
-      aresCanvas.width = 512; aresCanvas.height = 256;
-      const arx = aresCanvas.getContext('2d');
-      const arImg = arx.createImageData(512, 256);
-      const arData = arImg.data;
-      for (let y = 0; y < 256; y++) {
-        const lat = (y / 256 - 0.5) * Math.PI;
-        for (let x = 0; x < 512; x++) {
-          const lon = (x / 512) * Math.PI * 2.0;
-          const an1 = Math.sin(lon * 3.0 + Math.sin(lat * 4.0) * 1.8);
-          const an2 = Math.cos(lon * 5.0 - lat * 4.0) * 0.5;
-          const aVal = (an1 + an2) * 0.5 + 0.5;
-          const isPolar = Math.abs(lat) > 1.30;
-          const idx = (y * 512 + x) * 4;
-          if (isPolar) {
-            arData[idx] = 245; arData[idx+1] = 240; arData[idx+2] = 238; arData[idx+3] = 255;
-          } else if (aVal > 0.65) {
-            // Dark volcanic basalt
-            arData[idx] = 68; arData[idx+1] = 40; arData[idx+2] = 35; arData[idx+3] = 255;
-          } else {
-            // Rust-red / Ochre desert
-            arData[idx] = 185; arData[idx+1] = 65 + Math.floor(aVal * 35); arData[idx+2] = 32; arData[idx+3] = 255;
-          }
-        }
-      }
-      arx.putImageData(arImg, 0, 0);
-      const aresTex = new THREE.CanvasTexture(aresCanvas);
-
-      const aresGroup = new THREE.Group();
-      aresGroup.position.set(-12.0, 18.0, -32.0);
-      const aresGeo = new THREE.SphereGeometry(1.5, 32, 32);
-      const aresMat = new THREE.MeshStandardMaterial({
-        map: aresTex,
-        color: new THREE.Color(0xffbb99),
-        emissive: new THREE.Color(0x2d0b04),
-        roughness: 0.75,
-        metalness: 0.05
-      });
-      const aresMesh = new THREE.Mesh(aresGeo, aresMat);
-      aresGroup.add(aresMesh);
-
-      celestialPlanetsGroup.add(aresGroup);
-      celestialPlanets.push({
-        group: aresGroup,
-        mesh: aresMesh,
-        rotSpeed: 0.0009,
-        basePos: new THREE.Vector3(-12.0, 18.0, -32.0),
-        driftPhase: 3.8
-      });
-
-      // 6e. CELESTIA (Multicolour Vibrant Magenta/Teal/Violet Nebula Gas Giant)
-      const celestiaCanvas = document.createElement('canvas');
-      celestiaCanvas.width = 512; celestiaCanvas.height = 256;
-      const cctx = celestiaCanvas.getContext('2d');
-      const cImg = cctx.createImageData(512, 256);
-      const cData = cImg.data;
-      for (let y = 0; y < 256; y++) {
-        const v = y / 256;
-        const lat = (v - 0.5) * Math.PI;
-        const cBand = Math.sin(lat * 14.0 + Math.sin(lat * 28.0) * 0.45);
-        for (let x = 0; x < 512; x++) {
-          const u = x / 512;
-          const lon = u * Math.PI * 2.0;
-          const swirl = Math.sin(lon * 4.0 + cBand * 3.0) * 0.5 + 0.5;
-          const idx = (y * 512 + x) * 4;
-          // Multicoloured neon bands: magenta, purple, teal, gold
-          const colR = Math.floor(190 * (1.0 - swirl) + 20 * swirl);
-          const colG = Math.floor(40 * (1.0 - swirl) + 180 * swirl);
-          const colB = Math.floor(215 * (1.0 - swirl) + 175 * swirl);
-          cData[idx] = colR; cData[idx+1] = colG; cData[idx+2] = colB; cData[idx+3] = 255;
-        }
-      }
-      cctx.putImageData(cImg, 0, 0);
-      const celestiaTex = new THREE.CanvasTexture(celestiaCanvas);
-
-      const celestiaGroup = new THREE.Group();
-      celestiaGroup.position.set(12.0, -19.5, -29.0);
-      const celestiaGeo = new THREE.SphereGeometry(2.2, 40, 40);
-      const celestiaMat = new THREE.MeshStandardMaterial({
-        map: celestiaTex,
-        emissive: new THREE.Color(0x280538),
-        roughness: 0.60,
-        metalness: 0.08
-      });
-      const celestiaMesh = new THREE.Mesh(celestiaGeo, celestiaMat);
-      celestiaGroup.add(celestiaMesh);
-
-      celestialPlanetsGroup.add(celestiaGroup);
-      celestialPlanets.push({
-        group: celestiaGroup,
-        mesh: celestiaMesh,
-        rotSpeed: 0.0020,
-        basePos: new THREE.Vector3(12.0, -19.5, -29.0),
-        driftPhase: 5.0
-      });
-
-      // 6b. MCP WASM SYNTHESIZED 3D DARK PLANET WITH RINGS (Colossal Backlit Eclipse)
+      // 6. MCP WASM SYNTHESIZED 3D DARK PLANET WITH RINGS (Colossal Backlit Eclipse)
       darkPlanetGroup = new THREE.Group();
       darkPlanetGroup.position.copy(darkPlanetBasePos);
       darkPlanetGroup.renderOrder = -5; // Behind NOVA (z = 0) and Star Bed (z = 0)
@@ -2646,7 +2444,6 @@
           galaxyMesh.visible = true;
           galaxyCoreMesh.visible = true;
           galaxyCoreMesh.scale.set(0.1, 0.1, 1);
-          if (celestialPlanetsGroup) celestialPlanetsGroup.visible = true;
         }
 
         camera.position.set(0, 0, targetCamZ);
@@ -3021,20 +2818,6 @@
         nebulaCloudsGroup.rotation.z = elapsedTime * 0.0006;
       }
 
-      // Animate medium celestial planets
-      if (celestialPlanetsGroup && celestialPlanetsGroup.visible) {
-        const aspect = (camera && camera.aspect) ? camera.aspect : (window.innerWidth / window.innerHeight);
-        const xSpread = aspect < 1.0 ? 0.72 : 1.0;
-        for (let i = 0; i < celestialPlanets.length; i++) {
-          const p = celestialPlanets[i];
-          if (p.mesh) p.mesh.rotation.y += p.rotSpeed * darkPlanetSpeedMult;
-          if (p.cloudsMesh) p.cloudsMesh.rotation.y += p.cloudsRotSpeed * darkPlanetSpeedMult;
-          // Celestial micro-drift & responsive framing
-          p.group.position.y = p.basePos.y + Math.sin(elapsedTime * 0.22 + p.driftPhase) * 0.28;
-          p.group.position.x = (p.basePos.x * xSpread) + Math.cos(elapsedTime * 0.16 + p.driftPhase) * 0.18;
-        }
-      }
-
       renderer.render(scene, camera);
     }
 
@@ -3106,9 +2889,6 @@
         if (darkPlanetAsteroidsMesh) {
           darkPlanetAsteroidsMesh.visible = false;
         }
-      }
-      if (celestialPlanetsGroup) {
-        celestialPlanetsGroup.visible = false;
       }
 
       // Reset window scroll & hide makeshift navbar
