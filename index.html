@@ -1765,10 +1765,10 @@
       });
 
       darkPlanetRingsMesh = new THREE.Mesh(darkPlanetRingGeo, darkPlanetRingMat);
-      // Axial Incline matching Cassini viewpoint: perspective tilt across screen
-      darkPlanetRingsMesh.rotation.x = Math.PI * 0.46;
-      darkPlanetRingsMesh.rotation.y = -Math.PI * 0.12;
-      darkPlanetRingsMesh.rotation.z = Math.PI * 0.14;
+      // Axial Incline angled for optimal ring visibility across perspective
+      darkPlanetRingsMesh.rotation.x = Math.PI * 0.39;
+      darkPlanetRingsMesh.rotation.y = -Math.PI * 0.10;
+      darkPlanetRingsMesh.rotation.z = Math.PI * 0.12;
       darkPlanetGroup.add(darkPlanetRingsMesh);
 
       // Asynchronous OpenSCAD STL Mesh Loader for authentic CAD wireframe
@@ -2446,10 +2446,16 @@
       // MCP WASM 3D DARK PLANET WITH RINGS (Colossal Backlit Eclipse)
       // ----------------------------------------------------
       if (darkPlanetGroup) {
-        if (introComplete) {
-          const introElapsed = (clock.getElapsedTime() - introStartTime);
-          const rawPlanetAlpha = THREE.MathUtils.clamp((introElapsed - 2.4) / 1.5, 0.0, 1.0);
-          const planetAlpha = rawPlanetAlpha * rawPlanetAlpha * (3.0 - 2.0 * rawPlanetAlpha);
+        const isVisibleByScroll = (introComplete && morphProgress > 0.02);
+        const shouldBeVisible = isVisibleByScroll || isCameraFocusedOnPlanet;
+
+        if (shouldBeVisible) {
+          let planetAlpha = 1.0;
+          if (!isCameraFocusedOnPlanet) {
+            // Smoothly blooms into view in sync with NOVA constellation assembly
+            const rawPlanetAlpha = THREE.MathUtils.clamp((morphProgress - 0.08) / 0.60, 0.0, 1.0);
+            planetAlpha = rawPlanetAlpha * rawPlanetAlpha * (3.0 - 2.0 * rawPlanetAlpha);
+          }
 
           if (planetAlpha > 0.005) {
             darkPlanetGroup.visible = true;
