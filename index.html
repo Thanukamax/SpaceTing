@@ -83,6 +83,7 @@
 
   <!-- Three.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
 
   <style>
     /* Custom Scrollbar & Selection */
@@ -254,15 +255,113 @@
         <span class="w-4 h-[2px] bg-starlight/90 group-hover:bg-white rounded-full transition-all"></span>
       </div>
     </button>
-
-    <!-- Top-Right: Crescent Moon -->
-    <button id="nav-moon-btn" 
-            class="group p-3 rounded-full glass-card border border-white/10 hover:border-starlight/50 bg-void-900/60 hover:bg-void-850/80 backdrop-blur-xl text-starlight hover:text-white transition-all duration-300 shadow-2xl active:scale-95 flex items-center justify-center cursor-pointer pointer-events-auto"
-            aria-label="Celestial Sound & Mood"
-            title="Toggle Ambient Drift">
-      <i data-lucide="moon" class="w-4 h-4 sm:w-5 sm:h-5 text-starlight/90 group-hover:text-white transition-transform group-hover:rotate-12 duration-300"></i>
-    </button>
   </header>
+
+  <!-- TOP-RIGHT CELESTIAL ADDON (MCP WASM 3D DARK PLANET) -->
+  <aside id="celestial-addon-root" class="fixed top-5 right-5 sm:top-6 sm:right-8 z-50 flex flex-col items-end pointer-events-auto transition-all duration-700">
+    <!-- Top-Right Row: Addon Pill + Crescent Moon Ambient Toggle -->
+    <div class="flex items-center gap-2.5">
+      <!-- MCP 3D PLANET ADDON PILL -->
+      <button id="planet-addon-toggle" 
+              class="group flex items-center gap-2 px-3.5 py-2 rounded-full glass-card border border-white/10 hover:border-cyan-400/50 bg-void-900/75 hover:bg-void-850/90 backdrop-blur-xl text-slate-200 hover:text-white transition-all duration-300 shadow-2xl active:scale-95 cursor-pointer"
+              aria-label="Celestial Addon: Noctis-IX 3D Model"
+              title="Inspect MCP 3D Dark Planet">
+        <!-- Animated mini-planet icon with orbit ring -->
+        <div class="relative w-5 h-5 flex items-center justify-center pointer-events-none">
+          <div class="absolute inset-0 rounded-full border border-cyan-400/40 group-hover:border-cyan-300 transform -rotate-45 scale-x-125 transition-all"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-800 shadow-[0_0_8px_rgba(34,211,238,0.4)]"></div>
+          <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        </div>
+        <div class="flex flex-col items-start leading-none pointer-events-none">
+          <span class="text-[11px] font-mono font-bold tracking-wider text-slate-200 group-hover:text-cyan-300 transition-colors">NOCTIS-IX</span>
+          <span class="text-[8.5px] font-mono tracking-widest text-slate-400 group-hover:text-slate-300 uppercase">MCP 3D ADDON</span>
+        </div>
+        <i data-lucide="chevron-down" id="addon-chevron" class="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-transform duration-300 ml-0.5 pointer-events-none"></i>
+      </button>
+
+      <!-- Top-Right: Crescent Moon (Ambient Audio & Drift) -->
+      <button id="nav-moon-btn" 
+              class="group p-2.5 rounded-full glass-card border border-white/10 hover:border-starlight/50 bg-void-900/60 hover:bg-void-850/80 backdrop-blur-xl text-starlight hover:text-white transition-all duration-300 shadow-2xl active:scale-95 flex items-center justify-center cursor-pointer pointer-events-auto"
+              aria-label="Celestial Sound & Mood"
+              title="Toggle Ambient Drift">
+        <i data-lucide="moon" class="w-4 h-4 text-starlight/90 group-hover:text-white transition-transform group-hover:rotate-12 duration-300"></i>
+      </button>
+    </div>
+
+    <!-- Expandable Telemetry & Control Drawer -->
+    <div id="planet-addon-drawer" class="hidden mt-2.5 w-72 sm:w-80 glass-card border border-white/15 bg-void-950/90 backdrop-blur-2xl rounded-2xl p-4 shadow-2xl transition-all duration-300 flex-col gap-3 text-left">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-mono font-bold text-white tracking-wider">EXOPLANET NOCTIS-IX</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">WASM CAD</span>
+          </div>
+          <div class="text-[10px] text-slate-400 font-mono mt-0.5">Synthesized via simple-3d-modeling-mcp</div>
+        </div>
+        <button id="addon-close-btn" class="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer" title="Close Panel">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+      <!-- Telemetry Grid -->
+      <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
+        <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
+          <span class="text-slate-500 block">CORE DIAMETER</span>
+          <span class="text-starlight font-semibold">72,000 km</span>
+        </div>
+        <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
+          <span class="text-slate-500 block">RING SPAN</span>
+          <span class="text-starlight font-semibold">176,000 km</span>
+        </div>
+        <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
+          <span class="text-slate-500 block">AXIAL INCLINE</span>
+          <span class="text-cyan-300 font-semibold">34.8° TILT</span>
+        </div>
+        <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
+          <span class="text-slate-500 block">DIVISIONS</span>
+          <span class="text-cyan-300 font-semibold">Cassini & Encke</span>
+        </div>
+      </div>
+
+      <!-- Interactive Controls -->
+      <div class="flex flex-col gap-2 pt-1 border-t border-white/10">
+        <!-- CAD Wireframe Toggle -->
+        <button id="addon-wireframe-btn" class="flex items-center justify-between px-3 py-2 rounded-xl bg-void-900/70 hover:bg-void-850 border border-white/10 hover:border-cyan-400/40 text-xs font-mono text-slate-200 transition-all cursor-pointer">
+          <span class="flex items-center gap-2">
+            <i data-lucide="box" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span>Holographic CAD Wireframe</span>
+          </span>
+          <span id="wireframe-status" class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">OFF</span>
+        </button>
+
+        <!-- Focus Camera on Planet -->
+        <button id="addon-focus-btn" class="flex items-center justify-between px-3 py-2 rounded-xl bg-void-900/70 hover:bg-void-850 border border-white/10 hover:border-starlight/40 text-xs font-mono text-slate-200 transition-all cursor-pointer">
+          <span class="flex items-center gap-2">
+            <i data-lucide="compass" class="w-3.5 h-3.5 text-starlight"></i>
+            <span id="focus-btn-text">Cinematic Focus Camera</span>
+          </span>
+          <i data-lucide="chevron-right" id="focus-chevron" class="w-3.5 h-3.5 text-slate-400 transition-transform"></i>
+        </button>
+
+        <!-- Spin Speed Controls -->
+        <div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-void-900/50 border border-white/5 text-[11px] font-mono text-slate-400">
+          <span>ORBIT SPEED</span>
+          <div class="flex items-center gap-1.5">
+            <button class="speed-btn px-2 py-0.5 rounded bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-colors cursor-pointer" data-speed="0.5">0.5x</button>
+            <button class="speed-btn px-2 py-0.5 rounded bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-bold cursor-pointer" data-speed="1.0">1.0x</button>
+            <button class="speed-btn px-2 py-0.5 rounded bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-colors cursor-pointer" data-speed="2.5">2.5x</button>
+          </div>
+        </div>
+
+        <!-- Download STL Asset -->
+        <a href="assets/dark_planet_rings.stl" download="noctis_ix_dark_planet_mcp.stl" class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-950/40 via-indigo-950/40 to-void-900/40 hover:from-cyan-900/50 hover:to-indigo-900/50 border border-cyan-500/30 hover:border-cyan-400/60 text-xs font-mono text-cyan-200 transition-all cursor-pointer mt-1">
+          <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i>
+          <span>Download 3D STL Model (3.8MB)</span>
+        </a>
+      </div>
+    </div>
+  </aside>
 
   <!-- Virtual Scroll Spacer: Preserves page length so native & momentum scrolling drive NOVA morphing -->
   <div id="scroll-spacer" class="w-full pointer-events-none" style="height: 250vh;"></div>
@@ -708,6 +807,14 @@
     // ----------------------------------------------------
     let scene, camera, renderer;
     let galaxyMesh, galaxyCoreMesh, starfieldMesh, silhouettePlanetMesh;
+    let darkPlanetGroup = null;
+    let darkPlanetCoreMesh = null;
+    let darkPlanetRingsMesh = null;
+    let darkPlanetWireframeMesh = null;
+    let darkPlanetBasePos = new THREE.Vector3(22.0, 11.0, -10.0);
+    let darkPlanetSpeedMult = 1.0;
+    let isDarkPlanetWireframe = false;
+    let isCameraFocusedOnPlanet = false;
     let positions, homePositions, velocities, fluidOffsets, colors, sizes, twinkles;
     let homeRadii, homeAngles, homeZ;
     let burstTurbulence;
@@ -1506,6 +1613,202 @@
       silhouettePlanetMesh.visible = false;
       scene.add(silhouettePlanetMesh);
 
+      // 6d. MCP WASM SYNTHESIZED 3D DARK PLANET WITH RINGS (Top-Right Addon)
+      darkPlanetGroup = new THREE.Group();
+      darkPlanetGroup.position.copy(darkPlanetBasePos);
+      darkPlanetGroup.renderOrder = 20;
+      darkPlanetGroup.visible = false;
+      scene.add(darkPlanetGroup);
+
+      // Planet Core: Deep obsidian sphere with Fresnel atmospheric twilight rim glow
+      const darkPlanetCoreGeo = new THREE.SphereGeometry(3.6, 64, 64);
+      const darkPlanetCoreMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uSunDirection: { value: new THREE.Vector3(-0.45, -0.25, 0.85).normalize() },
+          uBaseColor: { value: new THREE.Color(0x090712) },
+          uAtmosphereColor: { value: new THREE.Color(0x483a69) },
+          uRimColor: { value: new THREE.Color(0xe8d5b5) },
+          uWireframe: { value: 0.0 },
+          uOpacity: { value: 0.0 }
+        },
+        vertexShader: `
+          varying vec3 vNormal;
+          varying vec3 vWorldPosition;
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            vNormal = normalize(normalMatrix * normal);
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPos.xyz;
+            gl_Position = projectionMatrix * viewMatrix * worldPos;
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 uSunDirection;
+          uniform vec3 uBaseColor;
+          uniform vec3 uAtmosphereColor;
+          uniform vec3 uRimColor;
+          uniform float uWireframe;
+          uniform float uOpacity;
+          varying vec3 vNormal;
+          varying vec3 vWorldPosition;
+          varying vec2 vUv;
+
+          void main() {
+            vec3 normal = normalize(vNormal);
+            vec3 viewDir = normalize(cameraPosition - vWorldPosition);
+            vec3 sunDir = normalize(uSunDirection);
+
+            // Diffuse starlight
+            float NdotL = max(dot(normal, sunDir), 0.0);
+            
+            // Atmospheric Fresnel rim
+            float rim = 1.0 - max(dot(viewDir, normal), 0.0);
+            rim = pow(rim, 2.6);
+
+            // Subtle dark planetary banding
+            float band = sin(vUv.y * 42.0) * 0.035 + cos(vUv.y * 18.0) * 0.02;
+            vec3 surface = uBaseColor + vec3(band * 0.015, band * 0.012, band * 0.03);
+
+            // Lit surface with smooth terminator
+            vec3 ambient = vec3(0.018, 0.014, 0.028);
+            vec3 lit = surface * (smoothstep(-0.15, 0.65, dot(normal, sunDir)) * 0.85 + 0.15) + ambient;
+
+            // Starlight rim glow (twilight violet to gold on illuminated crescent)
+            vec3 rimGlow = mix(uAtmosphereColor, uRimColor, NdotL) * rim * 1.8;
+
+            vec3 col = lit + rimGlow;
+            if (uWireframe > 0.5) {
+              col = vec3(0.15, 0.80, 0.95);
+            }
+            gl_FragColor = vec4(col, uOpacity);
+          }
+        `,
+        transparent: true,
+        depthWrite: true
+      });
+
+      darkPlanetCoreMesh = new THREE.Mesh(darkPlanetCoreGeo, darkPlanetCoreMat);
+      darkPlanetGroup.add(darkPlanetCoreMesh);
+
+      // Multi-Tiered Ring System (OpenSCAD Parametric Dimensions: inner 4.3, outer 10.2)
+      const darkPlanetRingGeo = new THREE.RingGeometry(4.3, 10.2, 160);
+      const darkPlanetRingMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uSunDirection: { value: new THREE.Vector3(-0.45, -0.25, 0.85).normalize() },
+          uPlanetCenter: { value: new THREE.Vector3(0, 0, 0) },
+          uPlanetRadius: { value: 3.6 },
+          uWireframe: { value: 0.0 },
+          uOpacity: { value: 0.0 }
+        },
+        vertexShader: `
+          varying vec3 vWorldPosition;
+          varying vec3 vLocalPosition;
+          varying vec3 vNormal;
+          void main() {
+            vLocalPosition = position;
+            vNormal = normalize(normalMatrix * normal);
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPos.xyz;
+            gl_Position = projectionMatrix * viewMatrix * worldPos;
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 uSunDirection;
+          uniform vec3 uPlanetCenter;
+          uniform float uPlanetRadius;
+          uniform float uWireframe;
+          uniform float uOpacity;
+          varying vec3 vWorldPosition;
+          varying vec3 vLocalPosition;
+
+          void main() {
+            float r = length(vLocalPosition.xy);
+
+            if (r < 4.3 || r > 10.1) discard;
+
+            // Cassini Division gap (r ~ 7.15 to 7.60)
+            if (r > 7.15 && r < 7.60) discard;
+
+            // Encke Gap (micro-gap at r ~ 8.78 to 8.85)
+            if (r > 8.78 && r < 8.85) discard;
+
+            // Thousands of fine orbital micro-grooves
+            float grooves = sin(r * 95.0) * 0.12 + sin(r * 220.0) * 0.08;
+
+            float alpha = 0.0;
+            vec3 ringCol = vec3(0.38, 0.35, 0.48);
+
+            if (r >= 4.3 && r <= 5.4) {
+              // Inner C-ring: dusky, semi-translucent
+              alpha = 0.35 + grooves * 0.15;
+              ringCol = vec3(0.24, 0.22, 0.32);
+            } else if (r > 5.4 && r <= 7.15) {
+              // Main B-ring: brilliant, dense, multi-toned
+              alpha = 0.88 + grooves * 0.10;
+              ringCol = vec3(0.48, 0.44, 0.58);
+            } else if (r >= 7.60 && r <= 9.3) {
+              // Outer A-ring: cool twilight starlight
+              alpha = 0.68 + grooves * 0.12;
+              ringCol = vec3(0.42, 0.38, 0.50);
+            } else if (r > 9.3) {
+              // F-ringlet: fine outer halo
+              alpha = 0.30 + grooves * 0.15;
+              ringCol = vec3(0.60, 0.54, 0.70);
+            }
+
+            // Real-Time Planetary Shadow Cast on Rings
+            vec3 sunDir = normalize(uSunDirection);
+            vec3 toCenter = vWorldPosition - uPlanetCenter;
+            float proj = dot(toCenter, -sunDir);
+            if (proj > 0.0) {
+              vec3 closest = -sunDir * proj;
+              float distToRay = length(toCenter - closest);
+              if (distToRay < uPlanetRadius * 1.05) {
+                float penumbra = smoothstep(uPlanetRadius * 0.90, uPlanetRadius * 1.05, distToRay);
+                alpha *= mix(0.06, 1.0, penumbra);
+              }
+            }
+
+            if (uWireframe > 0.5) {
+              gl_FragColor = vec4(0.2, 0.85, 1.0, uOpacity * 0.85);
+            } else {
+              gl_FragColor = vec4(ringCol, alpha * uOpacity);
+            }
+          }
+        `,
+        side: THREE.DoubleSide,
+        transparent: true,
+        depthWrite: false
+      });
+
+      darkPlanetRingsMesh = new THREE.Mesh(darkPlanetRingGeo, darkPlanetRingMat);
+      // Axial Incline: ~34.8° tilt matching OpenSCAD model
+      darkPlanetRingsMesh.rotation.x = Math.PI * 0.44;
+      darkPlanetRingsMesh.rotation.y = -Math.PI * 0.10;
+      darkPlanetRingsMesh.rotation.z = Math.PI * 0.16;
+      darkPlanetGroup.add(darkPlanetRingsMesh);
+
+      // Asynchronous OpenSCAD STL Mesh Loader for authentic CAD wireframe
+      if (typeof THREE.STLLoader !== 'undefined') {
+        const loader = new THREE.STLLoader();
+        loader.load('assets/dark_planet_rings.stl', (geo) => {
+          geo.computeVertexNormals();
+          const wireMat = new THREE.MeshBasicMaterial({
+            color: 0x22d3ee,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.85
+          });
+          darkPlanetWireframeMesh = new THREE.Mesh(geo, wireMat);
+          darkPlanetWireframeMesh.scale.set(0.20, 0.20, 0.20);
+          darkPlanetWireframeMesh.visible = false;
+          darkPlanetGroup.add(darkPlanetWireframeMesh);
+        }, undefined, (err) => {
+          console.warn('STL Loader notice:', err);
+        });
+      }
+
       // 6c. BED OF STARS AT THE BOTTOM OF THE SCREEN
       const starBedGeo = new THREE.BufferGeometry();
 
@@ -1638,6 +1941,7 @@
       scene.add(starBedMesh);
 
       layoutStarBed();
+      updateDarkPlanetPosition();
 
       // Event Listeners for fluid cursor interaction & responsive layout
       window.addEventListener('resize', onWindowResize);
@@ -1647,6 +1951,24 @@
       window.addEventListener('touchend', onTouchEnd, { passive: true });
 
       animate();
+    }
+
+    function updateDarkPlanetPosition() {
+      if (!darkPlanetGroup || !camera) return;
+      const aspect = window.innerWidth / window.innerHeight;
+      const dist = 45.0; // Distance between camera and planet Z plane
+      const vFOV = (camera.fov * Math.PI) / 180;
+      const halfHeight = dist * Math.tan(vFOV / 2);
+      const halfWidth = halfHeight * aspect;
+
+      if (aspect > 1.2) {
+        darkPlanetBasePos.set(halfWidth - 14.5, halfHeight - 9.5, -10.0);
+        darkPlanetGroup.scale.set(1.0, 1.0, 1.0);
+      } else {
+        darkPlanetBasePos.set(halfWidth - 6.8, halfHeight - 6.5, -10.0);
+        darkPlanetGroup.scale.set(0.65, 0.65, 0.65);
+      }
+      darkPlanetGroup.position.copy(darkPlanetBasePos);
     }
 
     function onWindowResize() {
@@ -1662,6 +1984,7 @@
       }
 
       layoutStarBed();
+      updateDarkPlanetPosition();
       if (typeof syncConstellationBtn === 'function') syncConstellationBtn();
       const uiText = document.getElementById('ui-visibility-text');
       if (uiText) {
@@ -2071,18 +2394,28 @@
         }
       }
 
-      // Smooth camera micro-drift (strictly clamped, safe)
-      if (isMouseActive) {
-        const targetCamX = THREE.MathUtils.clamp(mouse2D.x * 2.2, -2.5, 2.5);
-        const targetCamY = THREE.MathUtils.clamp(mouse2D.y * 1.6, -2.0, 2.0);
-        camera.position.x += (targetCamX - camera.position.x) * 0.03;
-        camera.position.y += (targetCamY - camera.position.y) * 0.03;
+      // Smooth camera micro-drift or Cinematic Focus on Noctis-IX
+      if (isCameraFocusedOnPlanet && darkPlanetGroup) {
+        const targetFocusX = darkPlanetGroup.position.x - 2.8;
+        const targetFocusY = darkPlanetGroup.position.y;
+        const targetFocusZ = darkPlanetGroup.position.z + 15.0;
+        camera.position.x += (targetFocusX - camera.position.x) * 0.045;
+        camera.position.y += (targetFocusY - camera.position.y) * 0.045;
+        camera.position.z += (targetFocusZ - camera.position.z) * 0.045;
+        camera.lookAt(darkPlanetGroup.position.x, darkPlanetGroup.position.y, darkPlanetGroup.position.z);
       } else {
-        camera.position.x += (0.0 - camera.position.x) * 0.03;
-        camera.position.y += (0.0 - camera.position.y) * 0.03;
+        if (isMouseActive) {
+          const targetCamX = THREE.MathUtils.clamp(mouse2D.x * 2.2, -2.5, 2.5);
+          const targetCamY = THREE.MathUtils.clamp(mouse2D.y * 1.6, -2.0, 2.0);
+          camera.position.x += (targetCamX - camera.position.x) * 0.03;
+          camera.position.y += (targetCamY - camera.position.y) * 0.03;
+        } else {
+          camera.position.x += (0.0 - camera.position.x) * 0.03;
+          camera.position.y += (0.0 - camera.position.y) * 0.03;
+        }
+        camera.position.z += (targetCamZ - camera.position.z) * 0.08;
+        camera.lookAt(0, 0, 0);
       }
-      camera.position.z += (targetCamZ - camera.position.z) * 0.08;
-      camera.lookAt(0, 0, 0);
 
       // Core pulse - softens and dims when NOVA is assembled so letters stand out brilliantly
       if (galaxyCoreMesh) {
@@ -2144,6 +2477,43 @@
         } else {
           silhouettePlanetMesh.visible = false;
           silhouettePlanetMesh.material.opacity = 0.0;
+        }
+      }
+
+      // ----------------------------------------------------
+      // MCP WASM 3D DARK PLANET WITH RINGS (Top-Right Addon)
+      // ----------------------------------------------------
+      if (darkPlanetGroup) {
+        if (introComplete) {
+          const introElapsed = (clock.getElapsedTime() - introStartTime);
+          const rawPlanetAlpha = THREE.MathUtils.clamp((introElapsed - 2.4) / 1.5, 0.0, 1.0);
+          const planetAlpha = rawPlanetAlpha * rawPlanetAlpha * (3.0 - 2.0 * rawPlanetAlpha);
+
+          if (planetAlpha > 0.005) {
+            darkPlanetGroup.visible = true;
+            if (darkPlanetCoreMesh && darkPlanetCoreMesh.material.uniforms) {
+              darkPlanetCoreMesh.material.uniforms.uOpacity.value = planetAlpha;
+              darkPlanetCoreMesh.rotation.y += 0.0022 * darkPlanetSpeedMult;
+            }
+            if (darkPlanetRingsMesh && darkPlanetRingsMesh.material.uniforms) {
+              darkPlanetRingsMesh.material.uniforms.uOpacity.value = planetAlpha;
+              darkPlanetRingsMesh.rotation.z += 0.0010 * darkPlanetSpeedMult;
+              darkPlanetRingsMesh.material.uniforms.uPlanetCenter.value.copy(darkPlanetGroup.position);
+            }
+            if (darkPlanetWireframeMesh && darkPlanetWireframeMesh.visible) {
+              darkPlanetWireframeMesh.rotation.y += 0.0022 * darkPlanetSpeedMult;
+            }
+
+            // Gentle celestial drift & mouse reaction when not in close camera focus
+            if (!isCameraFocusedOnPlanet) {
+              darkPlanetGroup.position.y = darkPlanetBasePos.y + Math.sin(elapsedTime * 0.40) * 0.28;
+              darkPlanetGroup.position.x = darkPlanetBasePos.x + Math.cos(elapsedTime * 0.30) * 0.18;
+              darkPlanetGroup.rotation.y = (mouseX * 0.08);
+              darkPlanetGroup.rotation.x = -(mouseY * 0.05);
+            }
+          }
+        } else {
+          darkPlanetGroup.visible = false;
         }
       }
 
@@ -2689,6 +3059,113 @@
           }
         });
       }
+
+      // 4. Top-Right Celestial Addon (MCP WASM 3D Dark Planet)
+      const planetAddonToggle = document.getElementById('planet-addon-toggle');
+      const planetAddonDrawer = document.getElementById('planet-addon-drawer');
+      const addonCloseBtn = document.getElementById('addon-close-btn');
+      const addonWireframeBtn = document.getElementById('addon-wireframe-btn');
+      const wireframeStatus = document.getElementById('wireframe-status');
+      const addonFocusBtn = document.getElementById('addon-focus-btn');
+      const focusBtnText = document.getElementById('focus-btn-text');
+      const focusChevron = document.getElementById('focus-chevron');
+      const addonChevron = document.getElementById('addon-chevron');
+
+      function togglePlanetDrawer(show) {
+        if (!planetAddonDrawer) return;
+        const willShow = show !== undefined ? show : planetAddonDrawer.classList.contains('hidden');
+        if (willShow) {
+          planetAddonDrawer.classList.remove('hidden');
+          planetAddonDrawer.classList.add('flex');
+          if (addonChevron) addonChevron.classList.add('rotate-180');
+          if (window.lucide) window.lucide.createIcons();
+          if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
+        } else {
+          planetAddonDrawer.classList.add('hidden');
+          planetAddonDrawer.classList.remove('flex');
+          if (addonChevron) addonChevron.classList.remove('rotate-180');
+        }
+      }
+
+      if (planetAddonToggle) {
+        planetAddonToggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          togglePlanetDrawer();
+        });
+      }
+
+      if (addonCloseBtn) {
+        addonCloseBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          togglePlanetDrawer(false);
+        });
+      }
+
+      // Close drawer on click outside
+      document.addEventListener('click', (e) => {
+        if (planetAddonDrawer && !planetAddonDrawer.classList.contains('hidden')) {
+          if (!planetAddonDrawer.contains(e.target) && !planetAddonToggle.contains(e.target)) {
+            togglePlanetDrawer(false);
+          }
+        }
+      });
+
+      // Wireframe CAD Mode Toggle
+      if (addonWireframeBtn) {
+        addonWireframeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          isDarkPlanetWireframe = !isDarkPlanetWireframe;
+          if (wireframeStatus) {
+            wireframeStatus.textContent = isDarkPlanetWireframe ? 'ON' : 'OFF';
+            wireframeStatus.className = isDarkPlanetWireframe 
+              ? 'text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30'
+              : 'text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400';
+          }
+          if (darkPlanetCoreMesh && darkPlanetCoreMesh.material.uniforms) {
+            darkPlanetCoreMesh.material.uniforms.uWireframe.value = isDarkPlanetWireframe ? 1.0 : 0.0;
+            darkPlanetCoreMesh.material.wireframe = isDarkPlanetWireframe;
+          }
+          if (darkPlanetRingsMesh && darkPlanetRingsMesh.material.uniforms) {
+            darkPlanetRingsMesh.material.uniforms.uWireframe.value = isDarkPlanetWireframe ? 1.0 : 0.0;
+            darkPlanetRingsMesh.material.wireframe = isDarkPlanetWireframe;
+          }
+          if (darkPlanetWireframeMesh) {
+            darkPlanetWireframeMesh.visible = isDarkPlanetWireframe;
+          }
+          if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
+          showToast(isDarkPlanetWireframe ? "// MCP CAD: WIREFRAME MODE ACTIVATED" : "// MCP CAD: SHADED TEXTURE RESTORED");
+        });
+      }
+
+      // Camera Focus on Planet Toggle
+      if (addonFocusBtn) {
+        addonFocusBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          isCameraFocusedOnPlanet = !isCameraFocusedOnPlanet;
+          if (focusBtnText) {
+            focusBtnText.textContent = isCameraFocusedOnPlanet ? 'Reset Cosmic Overview' : 'Cinematic Focus Camera';
+          }
+          if (focusChevron) {
+            focusChevron.classList.toggle('rotate-90', isCameraFocusedOnPlanet);
+          }
+          if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
+          showToast(isCameraFocusedOnPlanet ? "// OBSERVATION: FOCUSING NOCTIS-IX ORBIT" : "// CAMERA RETURNED TO SYSTEM OVERVIEW");
+        });
+      }
+
+      // Speed buttons
+      document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const speed = parseFloat(btn.dataset.speed) || 1.0;
+          darkPlanetSpeedMult = speed;
+          document.querySelectorAll('.speed-btn').forEach(b => {
+            b.className = 'speed-btn px-2 py-0.5 rounded bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-colors cursor-pointer';
+          });
+          btn.className = 'speed-btn px-2 py-0.5 rounded bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-bold cursor-pointer';
+          if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
+        });
+      });
 
       // 8b. Scroll & Gesture Driven Apple-Font "NOVA" Morphing Engine
       function syncConstellationBtn() {
