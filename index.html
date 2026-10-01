@@ -811,7 +811,7 @@
     let darkPlanetCoreMesh = null;
     let darkPlanetRingsMesh = null;
     let darkPlanetWireframeMesh = null;
-    let darkPlanetBasePos = new THREE.Vector3(22.0, 11.0, -10.0);
+    let darkPlanetBasePos = new THREE.Vector3(25.0, -5.5, -14.0);
     let darkPlanetSpeedMult = 1.0;
     let isDarkPlanetWireframe = false;
     let isCameraFocusedOnPlanet = false;
@@ -1643,23 +1643,23 @@
             // Backlit illumination (sun is behind/above the planet)
             float NdotL = dot(normal, sunDir);
             
-            // Fresnel along silhouette edge
+            // Fresnel along silhouette edge (razor-thin starlight rim)
             float rim = 1.0 - max(dot(viewDir, normal), 0.0);
-            rim = pow(rim, 3.4);
+            rim = pow(rim, 4.6);
 
             // Subtle Cassini cloud bands across latitude
             float band = sin(vUv.y * 70.0) * 0.015 + cos(vUv.y * 32.0) * 0.01;
-            vec3 surface = uBaseColor + vec3(band * 0.005, band * 0.006, band * 0.008);
+            vec3 surface = uBaseColor + vec3(band * 0.002, band * 0.003, band * 0.004);
 
-            // Deep void nightside: almost completely pitch black
-            vec3 ambient = vec3(0.002, 0.002, 0.003);
+            // Deep void nightside: pure pitch-black shadow
+            vec3 ambient = vec3(0.0004, 0.0004, 0.0008);
 
-            // Thin, brilliant backlit crescent (only lit where normal catches sunlight near limb)
-            float crescent = smoothstep(-0.06, 0.42, NdotL) * smoothstep(0.12, 0.98, rim);
-            vec3 sunlit = uRimColor * crescent * 2.8;
+            // Thin, brilliant backlit crescent along sunward rim
+            float crescent = smoothstep(0.02, 0.48, NdotL) * smoothstep(0.30, 0.98, rim);
+            vec3 sunlit = uRimColor * crescent * 3.2;
 
             // Soft atmospheric twilight haze on sunward horizon
-            vec3 atmo = uAtmosphereColor * rim * smoothstep(-0.25, 0.45, NdotL) * 0.75;
+            vec3 atmo = uAtmosphereColor * rim * smoothstep(-0.15, 0.50, NdotL) * 0.45;
 
             vec3 col = surface + sunlit + atmo + ambient;
             if (uWireframe > 0.5) {
@@ -1723,21 +1723,30 @@
 
             if (r >= 14.0 && r <= 17.5) {
               // Inner C-ring: dusky, semi-translucent
-              alpha = 0.28 + grooves * 0.10;
-              ringCol = vec3(0.42, 0.44, 0.48);
+              alpha = 0.24 + grooves * 0.08;
+              ringCol = vec3(0.38, 0.40, 0.44);
             } else if (r > 17.5 && r <= 23.5) {
               // Main B-ring: brilliant, dense, prominent multi-toned bands
-              alpha = 0.94 + grooves * 0.08;
-              ringCol = vec3(0.86, 0.88, 0.93);
+              alpha = 0.92 + grooves * 0.08;
+              ringCol = vec3(0.84, 0.86, 0.92);
             } else if (r >= 25.2 && r <= 31.0) {
               // Outer A-ring: cool silver starlight
-              alpha = 0.72 + grooves * 0.10;
-              ringCol = vec3(0.68, 0.71, 0.76);
+              alpha = 0.68 + grooves * 0.10;
+              ringCol = vec3(0.64, 0.67, 0.73);
             } else if (r > 31.0) {
               // F-ringlet: fine outer halo boundary
-              alpha = 0.26 + grooves * 0.12;
-              ringCol = vec3(0.78, 0.80, 0.85);
+              alpha = 0.22 + grooves * 0.10;
+              ringCol = vec3(0.72, 0.75, 0.80);
             }
+
+            // Outer radial edge & tip shadow falloff (shadowing the outer tips of the rings)
+            float outerRadialShadow = smoothstep(33.6, 27.5, r) * 0.55 + 0.45;
+            float xTipExtent = abs(vLocalPosition.x) / 33.6;
+            float tipFalloff = smoothstep(0.96, 0.35, xTipExtent);
+            float tipShadow = mix(0.18, 1.0, tipFalloff * outerRadialShadow);
+
+            alpha *= tipShadow;
+            ringCol *= mix(0.28, 1.0, tipShadow);
 
             // Real-Time Planetary Shadow Cast on Rings (Deep Pitch Black Eclipse)
             vec3 sunDir = normalize(uSunDirection);
@@ -1746,9 +1755,10 @@
             if (proj > 0.0) {
               vec3 closest = -sunDir * proj;
               float distToRay = length(toCenter - closest);
-              if (distToRay < uPlanetRadius * 1.02) {
-                float penumbra = smoothstep(uPlanetRadius * 0.94, uPlanetRadius * 1.02, distToRay);
-                alpha *= mix(0.015, 1.0, penumbra);
+              if (distToRay < uPlanetRadius * 1.12) {
+                float penumbra = smoothstep(uPlanetRadius * 0.88, uPlanetRadius * 1.12, distToRay);
+                alpha *= mix(0.005, 1.0, penumbra);
+                ringCol *= mix(0.02, 1.0, penumbra);
               }
             }
 
@@ -1765,10 +1775,10 @@
       });
 
       darkPlanetRingsMesh = new THREE.Mesh(darkPlanetRingGeo, darkPlanetRingMat);
-      // Axial Incline angled for optimal ring visibility across perspective
+      // Axial Incline angled for optimal ring visibility across perspective (flipped to right side)
       darkPlanetRingsMesh.rotation.x = Math.PI * 0.39;
-      darkPlanetRingsMesh.rotation.y = -Math.PI * 0.10;
-      darkPlanetRingsMesh.rotation.z = Math.PI * 0.12;
+      darkPlanetRingsMesh.rotation.y = Math.PI * 0.10;
+      darkPlanetRingsMesh.rotation.z = -Math.PI * 0.12;
       darkPlanetGroup.add(darkPlanetRingsMesh);
 
       // Asynchronous OpenSCAD STL Mesh Loader for authentic CAD wireframe
@@ -1944,12 +1954,12 @@
       const halfWidth = halfHeight * aspect;
 
       if (aspect > 1.2) {
-        // Desktop: colossal planet anchored on the left side, sphere partially cropped like Cassini photo
-        darkPlanetBasePos.set(-halfWidth + 12.0, 1.0, -14.0);
+        // Desktop: colossal planet anchored lower on the right side
+        darkPlanetBasePos.set(halfWidth - 12.0, -5.5, -14.0);
         darkPlanetGroup.scale.set(1.0, 1.0, 1.0);
       } else {
-        // Mobile / Tablet: nestled on the left edge with balanced scaling
-        darkPlanetBasePos.set(-halfWidth + 5.0, 2.0, -14.0);
+        // Mobile / Tablet: nestled lower on the right edge with balanced scaling
+        darkPlanetBasePos.set(halfWidth - 5.0, -3.8, -14.0);
         darkPlanetGroup.scale.set(0.68, 0.68, 0.68);
       }
       darkPlanetGroup.position.copy(darkPlanetBasePos);
@@ -2380,13 +2390,13 @@
 
       // Smooth camera micro-drift or Cinematic Focus on Noctis-IX
       if (isCameraFocusedOnPlanet && darkPlanetGroup) {
-        const targetFocusX = darkPlanetGroup.position.x + 10.0;
+        const targetFocusX = darkPlanetGroup.position.x - 10.0;
         const targetFocusY = darkPlanetGroup.position.y + 2.0;
         const targetFocusZ = darkPlanetGroup.position.z + 34.0;
         camera.position.x += (targetFocusX - camera.position.x) * 0.045;
         camera.position.y += (targetFocusY - camera.position.y) * 0.045;
         camera.position.z += (targetFocusZ - camera.position.z) * 0.045;
-        camera.lookAt(darkPlanetGroup.position.x + 4.0, darkPlanetGroup.position.y, darkPlanetGroup.position.z);
+        camera.lookAt(darkPlanetGroup.position.x - 4.0, darkPlanetGroup.position.y, darkPlanetGroup.position.z);
       } else {
         if (isMouseActive) {
           const targetCamX = THREE.MathUtils.clamp(mouse2D.x * 2.2, -2.5, 2.5);
