@@ -308,19 +308,19 @@
       <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
         <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
           <span class="text-slate-500 block">CORE DIAMETER</span>
-          <span class="text-starlight font-semibold">72,000 km</span>
+          <span class="text-starlight font-semibold">240,000 km</span>
         </div>
         <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
           <span class="text-slate-500 block">RING SPAN</span>
-          <span class="text-starlight font-semibold">176,000 km</span>
+          <span class="text-starlight font-semibold">680,000 km</span>
         </div>
         <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
           <span class="text-slate-500 block">AXIAL INCLINE</span>
           <span class="text-cyan-300 font-semibold">34.8° TILT</span>
         </div>
         <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
-          <span class="text-slate-500 block">DIVISIONS</span>
-          <span class="text-cyan-300 font-semibold">Cassini & Encke</span>
+          <span class="text-slate-500 block">LIGHTING</span>
+          <span class="text-cyan-300 font-semibold">Backlit Eclipse</span>
         </div>
       </div>
 
@@ -1620,14 +1620,14 @@
       darkPlanetGroup.visible = false;
       scene.add(darkPlanetGroup);
 
-      // Planet Core: Deep obsidian sphere with Fresnel atmospheric twilight rim glow
-      const darkPlanetCoreGeo = new THREE.SphereGeometry(3.6, 64, 64);
+      // Planet Core: Colossal Obsidian Sphere with Backlit Cassini Crescent Rim
+      const darkPlanetCoreGeo = new THREE.SphereGeometry(12.0, 80, 80);
       const darkPlanetCoreMat = new THREE.ShaderMaterial({
         uniforms: {
-          uSunDirection: { value: new THREE.Vector3(-0.45, -0.25, 0.85).normalize() },
-          uBaseColor: { value: new THREE.Color(0x090712) },
-          uAtmosphereColor: { value: new THREE.Color(0x483a69) },
-          uRimColor: { value: new THREE.Color(0xe8d5b5) },
+          uSunDirection: { value: new THREE.Vector3(0.28, 0.88, -0.42).normalize() },
+          uBaseColor: { value: new THREE.Color(0x030206) }, // Deep void pitch-black
+          uAtmosphereColor: { value: new THREE.Color(0x334155) }, // Cool slate haze
+          uRimColor: { value: new THREE.Color(0xf8fafc) }, // Brilliant starlight silver crescent
           uWireframe: { value: 0.0 },
           uOpacity: { value: 0.0 }
         },
@@ -1659,25 +1659,28 @@
             vec3 viewDir = normalize(cameraPosition - vWorldPosition);
             vec3 sunDir = normalize(uSunDirection);
 
-            // Diffuse starlight
-            float NdotL = max(dot(normal, sunDir), 0.0);
+            // Backlit illumination (sun is behind/above the planet)
+            float NdotL = dot(normal, sunDir);
             
-            // Atmospheric Fresnel rim
+            // Fresnel along silhouette edge
             float rim = 1.0 - max(dot(viewDir, normal), 0.0);
-            rim = pow(rim, 2.6);
+            rim = pow(rim, 3.4);
 
-            // Subtle dark planetary banding
-            float band = sin(vUv.y * 42.0) * 0.035 + cos(vUv.y * 18.0) * 0.02;
-            vec3 surface = uBaseColor + vec3(band * 0.015, band * 0.012, band * 0.03);
+            // Subtle Cassini cloud bands across latitude
+            float band = sin(vUv.y * 70.0) * 0.015 + cos(vUv.y * 32.0) * 0.01;
+            vec3 surface = uBaseColor + vec3(band * 0.005, band * 0.006, band * 0.008);
 
-            // Lit surface with smooth terminator
-            vec3 ambient = vec3(0.018, 0.014, 0.028);
-            vec3 lit = surface * (smoothstep(-0.15, 0.65, dot(normal, sunDir)) * 0.85 + 0.15) + ambient;
+            // Deep void nightside: almost completely pitch black
+            vec3 ambient = vec3(0.002, 0.002, 0.003);
 
-            // Starlight rim glow (twilight violet to gold on illuminated crescent)
-            vec3 rimGlow = mix(uAtmosphereColor, uRimColor, NdotL) * rim * 1.8;
+            // Thin, brilliant backlit crescent (only lit where normal catches sunlight near limb)
+            float crescent = smoothstep(-0.06, 0.42, NdotL) * smoothstep(0.12, 0.98, rim);
+            vec3 sunlit = uRimColor * crescent * 2.8;
 
-            vec3 col = lit + rimGlow;
+            // Soft atmospheric twilight haze on sunward horizon
+            vec3 atmo = uAtmosphereColor * rim * smoothstep(-0.25, 0.45, NdotL) * 0.75;
+
+            vec3 col = surface + sunlit + atmo + ambient;
             if (uWireframe > 0.5) {
               col = vec3(0.15, 0.80, 0.95);
             }
@@ -1691,13 +1694,13 @@
       darkPlanetCoreMesh = new THREE.Mesh(darkPlanetCoreGeo, darkPlanetCoreMat);
       darkPlanetGroup.add(darkPlanetCoreMesh);
 
-      // Multi-Tiered Ring System (OpenSCAD Parametric Dimensions: inner 4.3, outer 10.2)
-      const darkPlanetRingGeo = new THREE.RingGeometry(4.3, 10.2, 160);
+      // Multi-Tiered Ring System (Scaled to Cassini Giant Dimensions: inner 14.0, outer 34.0)
+      const darkPlanetRingGeo = new THREE.RingGeometry(14.0, 34.0, 180);
       const darkPlanetRingMat = new THREE.ShaderMaterial({
         uniforms: {
-          uSunDirection: { value: new THREE.Vector3(-0.45, -0.25, 0.85).normalize() },
+          uSunDirection: { value: new THREE.Vector3(0.28, 0.88, -0.42).normalize() },
           uPlanetCenter: { value: new THREE.Vector3(0, 0, 0) },
-          uPlanetRadius: { value: 3.6 },
+          uPlanetRadius: { value: 12.0 },
           uWireframe: { value: 0.0 },
           uOpacity: { value: 0.0 }
         },
@@ -1725,48 +1728,48 @@
           void main() {
             float r = length(vLocalPosition.xy);
 
-            if (r < 4.3 || r > 10.1) discard;
+            if (r < 14.0 || r > 33.6) discard;
 
-            // Cassini Division gap (r ~ 7.15 to 7.60)
-            if (r > 7.15 && r < 7.60) discard;
+            // Cassini Division gap (r ~ 23.5 to 25.2) - iconic dark gap
+            if (r > 23.5 && r < 25.2) discard;
 
-            // Encke Gap (micro-gap at r ~ 8.78 to 8.85)
-            if (r > 8.78 && r < 8.85) discard;
+            // Encke Gap (micro-gap at r ~ 29.0 to 29.35)
+            if (r > 29.0 && r < 29.35) discard;
 
-            // Thousands of fine orbital micro-grooves
-            float grooves = sin(r * 95.0) * 0.12 + sin(r * 220.0) * 0.08;
+            // Fine orbital micro-grooves
+            float grooves = sin(r * 32.0) * 0.12 + sin(r * 75.0) * 0.08 + sin(r * 160.0) * 0.04;
 
             float alpha = 0.0;
-            vec3 ringCol = vec3(0.38, 0.35, 0.48);
+            vec3 ringCol = vec3(0.75, 0.77, 0.82); // Monochrome silver-white Cassini palette
 
-            if (r >= 4.3 && r <= 5.4) {
+            if (r >= 14.0 && r <= 17.5) {
               // Inner C-ring: dusky, semi-translucent
-              alpha = 0.35 + grooves * 0.15;
-              ringCol = vec3(0.24, 0.22, 0.32);
-            } else if (r > 5.4 && r <= 7.15) {
-              // Main B-ring: brilliant, dense, multi-toned
-              alpha = 0.88 + grooves * 0.10;
-              ringCol = vec3(0.48, 0.44, 0.58);
-            } else if (r >= 7.60 && r <= 9.3) {
-              // Outer A-ring: cool twilight starlight
-              alpha = 0.68 + grooves * 0.12;
-              ringCol = vec3(0.42, 0.38, 0.50);
-            } else if (r > 9.3) {
-              // F-ringlet: fine outer halo
-              alpha = 0.30 + grooves * 0.15;
-              ringCol = vec3(0.60, 0.54, 0.70);
+              alpha = 0.28 + grooves * 0.10;
+              ringCol = vec3(0.42, 0.44, 0.48);
+            } else if (r > 17.5 && r <= 23.5) {
+              // Main B-ring: brilliant, dense, prominent multi-toned bands
+              alpha = 0.94 + grooves * 0.08;
+              ringCol = vec3(0.86, 0.88, 0.93);
+            } else if (r >= 25.2 && r <= 31.0) {
+              // Outer A-ring: cool silver starlight
+              alpha = 0.72 + grooves * 0.10;
+              ringCol = vec3(0.68, 0.71, 0.76);
+            } else if (r > 31.0) {
+              // F-ringlet: fine outer halo boundary
+              alpha = 0.26 + grooves * 0.12;
+              ringCol = vec3(0.78, 0.80, 0.85);
             }
 
-            // Real-Time Planetary Shadow Cast on Rings
+            // Real-Time Planetary Shadow Cast on Rings (Deep Pitch Black Eclipse)
             vec3 sunDir = normalize(uSunDirection);
             vec3 toCenter = vWorldPosition - uPlanetCenter;
             float proj = dot(toCenter, -sunDir);
             if (proj > 0.0) {
               vec3 closest = -sunDir * proj;
               float distToRay = length(toCenter - closest);
-              if (distToRay < uPlanetRadius * 1.05) {
-                float penumbra = smoothstep(uPlanetRadius * 0.90, uPlanetRadius * 1.05, distToRay);
-                alpha *= mix(0.06, 1.0, penumbra);
+              if (distToRay < uPlanetRadius * 1.02) {
+                float penumbra = smoothstep(uPlanetRadius * 0.94, uPlanetRadius * 1.02, distToRay);
+                alpha *= mix(0.015, 1.0, penumbra);
               }
             }
 
@@ -1783,10 +1786,10 @@
       });
 
       darkPlanetRingsMesh = new THREE.Mesh(darkPlanetRingGeo, darkPlanetRingMat);
-      // Axial Incline: ~34.8° tilt matching OpenSCAD model
-      darkPlanetRingsMesh.rotation.x = Math.PI * 0.44;
-      darkPlanetRingsMesh.rotation.y = -Math.PI * 0.10;
-      darkPlanetRingsMesh.rotation.z = Math.PI * 0.16;
+      // Axial Incline matching Cassini viewpoint: perspective tilt across screen
+      darkPlanetRingsMesh.rotation.x = Math.PI * 0.46;
+      darkPlanetRingsMesh.rotation.y = -Math.PI * 0.12;
+      darkPlanetRingsMesh.rotation.z = Math.PI * 0.14;
       darkPlanetGroup.add(darkPlanetRingsMesh);
 
       // Asynchronous OpenSCAD STL Mesh Loader for authentic CAD wireframe
@@ -1801,7 +1804,7 @@
             opacity: 0.85
           });
           darkPlanetWireframeMesh = new THREE.Mesh(geo, wireMat);
-          darkPlanetWireframeMesh.scale.set(0.20, 0.20, 0.20);
+          darkPlanetWireframeMesh.scale.set(0.67, 0.67, 0.67);
           darkPlanetWireframeMesh.visible = false;
           darkPlanetGroup.add(darkPlanetWireframeMesh);
         }, undefined, (err) => {
@@ -1956,17 +1959,19 @@
     function updateDarkPlanetPosition() {
       if (!darkPlanetGroup || !camera) return;
       const aspect = window.innerWidth / window.innerHeight;
-      const dist = 45.0; // Distance between camera and planet Z plane
+      const dist = 49.0; // Distance between camera (Z ~35) and planet (Z ~ -14)
       const vFOV = (camera.fov * Math.PI) / 180;
       const halfHeight = dist * Math.tan(vFOV / 2);
       const halfWidth = halfHeight * aspect;
 
       if (aspect > 1.2) {
-        darkPlanetBasePos.set(halfWidth - 14.5, halfHeight - 9.5, -10.0);
+        // Desktop: colossal planet anchored on the left side, sphere partially cropped like Cassini photo
+        darkPlanetBasePos.set(-halfWidth + 12.0, 1.0, -14.0);
         darkPlanetGroup.scale.set(1.0, 1.0, 1.0);
       } else {
-        darkPlanetBasePos.set(halfWidth - 6.8, halfHeight - 6.5, -10.0);
-        darkPlanetGroup.scale.set(0.65, 0.65, 0.65);
+        // Mobile / Tablet: nestled on the left edge with balanced scaling
+        darkPlanetBasePos.set(-halfWidth + 5.0, 2.0, -14.0);
+        darkPlanetGroup.scale.set(0.68, 0.68, 0.68);
       }
       darkPlanetGroup.position.copy(darkPlanetBasePos);
     }
@@ -2396,13 +2401,13 @@
 
       // Smooth camera micro-drift or Cinematic Focus on Noctis-IX
       if (isCameraFocusedOnPlanet && darkPlanetGroup) {
-        const targetFocusX = darkPlanetGroup.position.x - 2.8;
-        const targetFocusY = darkPlanetGroup.position.y;
-        const targetFocusZ = darkPlanetGroup.position.z + 15.0;
+        const targetFocusX = darkPlanetGroup.position.x + 10.0;
+        const targetFocusY = darkPlanetGroup.position.y + 2.0;
+        const targetFocusZ = darkPlanetGroup.position.z + 34.0;
         camera.position.x += (targetFocusX - camera.position.x) * 0.045;
         camera.position.y += (targetFocusY - camera.position.y) * 0.045;
         camera.position.z += (targetFocusZ - camera.position.z) * 0.045;
-        camera.lookAt(darkPlanetGroup.position.x, darkPlanetGroup.position.y, darkPlanetGroup.position.z);
+        camera.lookAt(darkPlanetGroup.position.x + 4.0, darkPlanetGroup.position.y, darkPlanetGroup.position.z);
       } else {
         if (isMouseActive) {
           const targetCamX = THREE.MathUtils.clamp(mouse2D.x * 2.2, -2.5, 2.5);
@@ -2506,10 +2511,10 @@
 
             // Gentle celestial drift & mouse reaction when not in close camera focus
             if (!isCameraFocusedOnPlanet) {
-              darkPlanetGroup.position.y = darkPlanetBasePos.y + Math.sin(elapsedTime * 0.40) * 0.28;
-              darkPlanetGroup.position.x = darkPlanetBasePos.x + Math.cos(elapsedTime * 0.30) * 0.18;
-              darkPlanetGroup.rotation.y = (mouseX * 0.08);
-              darkPlanetGroup.rotation.x = -(mouseY * 0.05);
+              darkPlanetGroup.position.y = darkPlanetBasePos.y + Math.sin(elapsedTime * 0.22) * 0.35;
+              darkPlanetGroup.position.x = darkPlanetBasePos.x + Math.cos(elapsedTime * 0.16) * 0.22;
+              darkPlanetGroup.rotation.y = (mouseX * 0.04);
+              darkPlanetGroup.rotation.x = -(mouseY * 0.025);
             }
           }
         } else {
