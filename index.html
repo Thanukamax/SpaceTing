@@ -363,8 +363,242 @@
     </div>
   </aside>
 
-  <!-- Virtual Scroll Spacer: Preserves page length so native & momentum scrolling drive NOVA morphing -->
-  <div id="scroll-spacer" class="w-full pointer-events-none" style="height: 250vh;"></div>
+  <!-- LEFT DESKTOP RETRO SKYSCRAPER AD (NEWGROUNDS 160x600 ASTRO-AD) -->
+  <aside id="retro-skyscraper-left" 
+         class="hidden xl:flex fixed left-4 2xl:left-7 top-24 bottom-10 w-36 2xl:w-44 glass-card border border-white/10 bg-void-950/75 backdrop-blur-md rounded-2xl p-3 flex-col justify-between items-center text-center shadow-2xl z-20 opacity-0 pointer-events-none transition-opacity duration-500">
+    <div class="w-full flex flex-col items-center gap-1.5 border-b border-white/10 pb-2">
+      <span class="text-[8.5px] font-mono tracking-widest text-cyan-400 font-bold uppercase">[ 160x600 ASTRO-AD ]</span>
+      <div class="w-full py-1 rounded bg-cyan-950/40 border border-cyan-500/20 text-[9px] font-mono font-bold text-cyan-300">
+        WARP DRIVES 50% OFF
+      </div>
+    </div>
+    
+    <div class="my-auto flex flex-col items-center gap-2 text-center">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-900 to-indigo-900 flex items-center justify-center border border-cyan-400/30 shadow-lg">
+        <span class="text-xl">🚀</span>
+      </div>
+      <span class="text-[10px] font-mono font-bold text-starlight leading-tight">NEBULA MINING RIGS // MK-IV</span>
+      <p class="text-[8.5px] text-slate-400 font-mono leading-tight">Zero-G plasma drill with liquid helium overclocking.</p>
+      <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// GEAR CLAIMED: +500 HYPERDRIVE CREDITS');" 
+              class="px-2.5 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-[9px] font-mono text-cyan-200 uppercase font-bold transition-all cursor-pointer">
+        CLAIM GEAR
+      </button>
+    </div>
+
+    <div class="w-full pt-2 border-t border-white/10 flex flex-col items-center gap-1">
+      <span class="text-[8px] font-mono text-slate-500">NEWGROUNDS PORTAL 2004</span>
+      <div class="flex items-center gap-1 text-[8.5px] font-mono text-emerald-400">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>ONLINE (4,892)</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT DESKTOP RETRO SKYSCRAPER AD (NEWGROUNDS RELAY SPONSOR) -->
+  <aside id="retro-skyscraper-right" 
+         class="hidden xl:flex fixed right-4 2xl:right-7 top-24 bottom-10 w-36 2xl:w-44 glass-card border border-white/10 bg-void-950/75 backdrop-blur-md rounded-2xl p-3 flex-col justify-between items-center text-center shadow-2xl z-20 opacity-0 pointer-events-none transition-opacity duration-500">
+    <div class="w-full flex flex-col items-center gap-1.5 border-b border-white/10 pb-2">
+      <span class="text-[8.5px] font-mono tracking-widest text-amber-400 font-bold uppercase">[ SPONSOR RELAY ]</span>
+      <div class="w-full py-1 rounded bg-amber-950/40 border border-amber-500/20 text-[9px] font-mono font-bold text-amber-300">
+        TOP PORTAL PICK
+      </div>
+    </div>
+
+    <div class="my-auto flex flex-col items-center gap-2 text-center">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-900 to-rose-950 flex items-center justify-center border border-amber-400/30 shadow-lg">
+        <span class="text-xl">🪐</span>
+      </div>
+      <span class="text-[10px] font-mono font-bold text-starlight leading-tight">EXPEDITION NOCTIS</span>
+      <p class="text-[8.5px] text-slate-400 font-mono leading-tight">Accretion ring mining expedition hiring deep void crew.</p>
+      <div class="text-[9px] font-mono text-amber-400 font-bold">★★★★★ 4.98</div>
+    </div>
+
+    <div class="w-full pt-2 border-t border-white/10 flex flex-col items-center gap-1">
+      <span class="text-[8px] font-mono text-slate-500">PROTECT THE PORTAL</span>
+      <span class="text-[9px] font-mono font-bold text-rose-400">VOTE 5 OR BLAM!</span>
+    </div>
+  </aside>
+
+  <!-- HERO SCROLL STAGE: 0 to 195vh drives Spiral Galaxy -> NOVA Constellation -> Flank Dispersal -->
+  <div id="hero-scroll-stage" class="relative w-full pointer-events-none" style="height: 195vh;">
+    <!-- Scroll Cue prompting to scroll past NOVA into Portal Blogs -->
+    <div id="nova-scroll-cue" class="absolute bottom-16 left-0 right-0 flex flex-col items-center justify-center gap-2 pointer-events-none opacity-0 transition-opacity duration-500">
+      <span class="text-[10px] font-mono tracking-widest text-starlight/80 uppercase">Scroll down for deep space logs</span>
+      <i data-lucide="chevron-down" class="w-4 h-4 text-starlight/70 animate-bounce"></i>
+    </div>
+  </div>
+
+  <!-- CENTRAL PAGE CONTENT: DEVLOGS, BLOGS & RETRO PORTAL FEED -->
+  <main id="portal-content-section" class="relative z-30 w-full min-h-screen pointer-events-auto">
+    <div class="max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 pb-32 flex flex-col gap-8">
+      
+      <!-- Portal Banner Header -->
+      <div class="glass-card border border-white/15 bg-void-950/85 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-8 -top-8 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+          <div class="flex items-center gap-2 font-mono text-xs text-slate-400">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            <span class="text-cyan-300 font-bold">TRANSMISSION CHANNEL // 0x7E3</span>
+          </div>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-starlight">PORTAL FEED V2.4</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-serif text-white tracking-wide starlight-glow">DEEP SPACE DISPATCHES & DEVLOGS</h1>
+        <p class="mt-2 text-xs sm:text-sm text-slate-300 font-mono leading-relaxed">
+          Chronicles from the outer rim: procedural point sprite raytracing, binaural audio synthesis, and field observations of planetary anomalies.
+        </p>
+      </div>
+
+      <!-- Post 1: WebGL Point Sprite Raytracing -->
+      <article class="glass-card border border-white/10 hover:border-cyan-400/40 bg-void-900/80 backdrop-blur-xl rounded-2xl p-6 sm:p-7 shadow-2xl transition-all duration-300 flex flex-col gap-4">
+        <div class="flex items-center justify-between text-xs font-mono">
+          <span class="px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">DEVLOG #042</span>
+          <span class="text-slate-400">OCTOBER 01, 2026</span>
+        </div>
+        <h2 class="text-lg sm:text-xl font-sans font-bold text-white tracking-wide hover:text-cyan-300 transition-colors">
+          16,000 Celestial Bodies in a Single WebGL Draw Call
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+          Rendering thousands of independent 3D meshes crushes frame rates due to CPU-GPU draw call bottlenecks. Instead, we raytraced true 3D spherical volumes inside point sprite billboards directly in GLSL fragment shaders.
+        </p>
+        <div class="p-3.5 rounded-xl bg-void-950/90 border border-white/10 font-mono text-[11px] text-cyan-200 overflow-x-auto">
+          <code>float z = sqrt(max(0.0, rSphere * rSphere - dist * dist));<br>vec3 norm = normalize(vec3(coord.x, -coord.y, z));<br>float NdotL = dot(norm, normalize(uSunDirection));</code>
+        </div>
+        <div class="flex items-center justify-between border-t border-white/10 pt-3 text-[11px] font-mono text-slate-400">
+          <span>CMDR. THANUKA</span>
+          <div class="flex items-center gap-3">
+            <span class="text-amber-300 font-bold">★★★★★ 4.96/5</span>
+            <span>48 COMMENTS</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 2: Binaural Audio Synthesis -->
+      <article class="glass-card border border-white/10 hover:border-starlight/40 bg-void-900/80 backdrop-blur-xl rounded-2xl p-6 sm:p-7 shadow-2xl transition-all duration-300 flex flex-col gap-4">
+        <div class="flex items-center justify-between text-xs font-mono">
+          <span class="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-bold">AUDIO SYNTHESIS</span>
+          <span class="text-slate-400">SEPTEMBER 28, 2026</span>
+        </div>
+        <h2 class="text-lg sm:text-xl font-sans font-bold text-white tracking-wide hover:text-starlight transition-colors">
+          The Sound of Deep Space: Binaural Oscillation & 432Hz Core
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+          Space may be a vacuum, but electromagnetic radiation translated into audio creates deeply hypnotic soundscapes. Our Web Audio engine synthesizes organic binaural frequency shifts and stellar chord progressions in real time.
+        </p>
+        <div class="flex items-center gap-3 pt-1">
+          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// PULSAR CHIME TRIGGERED (432Hz)');" 
+                  class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-xs font-mono text-purple-200 transition-all cursor-pointer">
+            <i data-lucide="play" class="w-3.5 h-3.5"></i>
+            <span>TRANSMIT AUDIO PULSE</span>
+          </button>
+          <span class="text-[11px] font-mono text-slate-400">Pure Web Audio API Synthesizer</span>
+        </div>
+        <div class="flex items-center justify-between border-t border-white/10 pt-3 text-[11px] font-mono text-slate-400">
+          <span>AUDIO DIVISION</span>
+          <div class="flex items-center gap-3">
+            <span class="text-amber-300 font-bold">★★★★★ 4.92/5</span>
+            <span>32 COMMENTS</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Post 3: Field Survey Noctis-IX -->
+      <article class="glass-card border border-white/10 hover:border-amber-400/40 bg-void-900/80 backdrop-blur-xl rounded-2xl p-6 sm:p-7 shadow-2xl transition-all duration-300 flex flex-col gap-4">
+        <div class="flex items-center justify-between text-xs font-mono">
+          <span class="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">FIELD SURVEY</span>
+          <span class="text-slate-400">SEPTEMBER 24, 2026</span>
+        </div>
+        <h2 class="text-lg sm:text-xl font-sans font-bold text-white tracking-wide hover:text-amber-300 transition-colors">
+          Noctis-IX: The Colossal Backlit Obsidian Gas Giant
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+          Discovered at the outer rim, Noctis-IX features a 680,000km ring span composed of 3,000 Keplerian asteroids synthesized via OpenSCAD & Three.js. Its backlit eclipse atmosphere exhibits dramatic forward scattering.
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-mono">
+          <div class="p-2.5 rounded-lg bg-void-950/80 border border-white/5">
+            <span class="text-slate-500 text-[10px] block">CORE DIAMETER</span>
+            <span class="text-white font-bold">240,000 km</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-void-950/80 border border-white/5">
+            <span class="text-slate-500 text-[10px] block">RING SPAN</span>
+            <span class="text-starlight font-bold">680,000 km</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-void-950/80 border border-white/5">
+            <span class="text-slate-500 text-[10px] block">AXIAL TILT</span>
+            <span class="text-cyan-300 font-bold">34.8°</span>
+          </div>
+          <div class="p-2.5 rounded-lg bg-void-950/80 border border-white/5">
+            <span class="text-slate-500 text-[10px] block">ATMOSPHERE</span>
+            <span class="text-emerald-400 font-bold">Methane Haze</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between border-t border-white/10 pt-3 text-[11px] font-mono text-slate-400">
+          <span>EXPEDITION CORPS</span>
+          <div class="flex items-center gap-3">
+            <span class="text-amber-300 font-bold">★★★★★ 5.00/5</span>
+            <span>74 COMMENTS</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Classic Newgrounds Community Voting Box -->
+      <div class="glass-card border border-white/15 bg-void-950/90 backdrop-blur-2xl rounded-2xl p-5 sm:p-6 text-center shadow-2xl flex flex-col items-center gap-3">
+        <span class="text-xs font-mono font-bold text-white tracking-wider uppercase">HOW WOULD YOU RATE THIS CELESTIAL PORTAL?</span>
+        <div class="flex items-center gap-2">
+          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 0.0 (BLAM INITIATED)');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-slate-400 font-bold transition-all cursor-pointer">0</button>
+          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 1.0');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-slate-300 font-bold transition-all cursor-pointer">1</button>
+          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 2.0');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-starlight font-bold transition-all cursor-pointer">2</button>
+          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 3.0');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-starlight font-bold transition-all cursor-pointer">3</button>
+          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 4.0');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-cyan-300 font-bold transition-all cursor-pointer">4</button>
+          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 5.0 ★ // MAXIMUM PORTAL RATING!');" class="w-10 h-10 rounded-xl bg-cyan-500/25 hover:bg-cyan-500/35 border border-cyan-400/50 text-sm font-mono text-cyan-200 font-bold shadow-lg shadow-cyan-500/20 transition-all cursor-pointer">5</button>
+        </div>
+        <span class="text-[10px] font-mono text-slate-400">DON'T BLAM! PROTECT EXCELLENT CONTENT ON THE CELESTIAL PORTAL.</span>
+      </div>
+
+      <!-- Comment Section Feed -->
+      <div class="glass-card border border-white/10 bg-void-900/70 backdrop-blur-xl rounded-2xl p-6 flex flex-col gap-4 shadow-xl">
+        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+          <span class="text-xs font-mono font-bold text-white tracking-wider uppercase">COMMUNITY TRANSMISSIONS</span>
+          <span class="text-[11px] font-mono text-slate-400">48 DISPATCHES</span>
+        </div>
+        
+        <div class="flex flex-col gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-void-950/60 border border-white/5 flex flex-col gap-1">
+            <div class="flex items-center justify-between text-slate-400 font-mono text-[10px]">
+              <span class="text-cyan-300 font-bold">xX_StarGazer_Xx</span>
+              <span>2 hours ago</span>
+            </div>
+            <p class="text-slate-300 font-sans">The ring shadows on the right planet are insane. 5/5 definitely frontpage worthy.</p>
+          </div>
+
+          <div class="p-3 rounded-xl bg-void-950/60 border border-white/5 flex flex-col gap-1">
+            <div class="flex items-center justify-between text-slate-400 font-mono text-[10px]">
+              <span class="text-amber-300 font-bold">Pico_Official</span>
+              <span>5 hours ago</span>
+            </div>
+            <p class="text-slate-300 font-sans">Can confirm the binaural audio gave me chills. Don't blam this masterpiece!</p>
+          </div>
+
+          <div class="p-3 rounded-xl bg-void-950/60 border border-white/5 flex flex-col gap-1">
+            <div class="flex items-center justify-between text-slate-400 font-mono text-[10px]">
+              <span class="text-purple-300 font-bold">NebulaDrifter_99</span>
+              <span>1 day ago</span>
+            </div>
+            <p class="text-slate-300 font-sans">Loving the old Newgrounds side banners. The stars on the sides feel alive.</p>
+          </div>
+        </div>
+
+        <!-- Transmit Comment Input -->
+        <div class="mt-2 flex gap-2">
+          <input type="text" id="newgrounds-comment-input" placeholder="Type a transmission..." class="flex-1 px-3.5 py-2 rounded-xl bg-void-950 border border-white/10 focus:border-cyan-400/50 text-xs text-white placeholder-slate-500 font-mono outline-none">
+          <button onclick="const el = document.getElementById('newgrounds-comment-input'); if(el && el.value.trim()){ if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// DISPATCH TRANSMITTED TO RELAY'); el.value=''; }" 
+                  class="px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-xs font-mono text-cyan-200 font-bold uppercase transition-all cursor-pointer">
+            TRANSMIT
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
 
 
   <!-- ========================================== -->
@@ -845,6 +1079,13 @@
     let morphProgress = 0.0;
     let wheelScrollAccumulator = 0.0;
 
+    // Outer Flank Dispersal Targets & Scroll State (Classic Newgrounds Portal Margins)
+    let flankTargets = null;
+    let flankDelays = null;
+    let flankSeeds = null;
+    let targetFlank = 0.0;
+    let flankProgress = 0.0;
+
 
 
     // Fluid cursor tracking in 3D galaxy plane
@@ -961,6 +1202,49 @@
         targets[i * 3 + 2] = (Math.random() - 0.5) * 3.5;
       }
 
+      return targets;
+    }
+
+    // Generates 3D coordinates evenly dispersing stars into the outer left & right margins/corners (like classic Newgrounds side gutters)
+    function generateFlankTargets(count) {
+      const targets = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const isLeft = (i % 2 === 0);
+
+        // 25% corner emphasis (top/bottom corners), 75% uniform vertical gutter framing
+        const cornerRoll = Math.random();
+        let x, y;
+
+        if (cornerRoll < 0.125) {
+          // Top outer corners
+          const u = Math.random();
+          const v = Math.random();
+          const xOffset = 20.0 + u * 15.0; // 20.0 to 35.0
+          x = isLeft ? -xOffset : xOffset;
+          y = 12.0 + v * 12.0;            // 12.0 to 24.0
+        } else if (cornerRoll < 0.25) {
+          // Bottom outer corners
+          const u = Math.random();
+          const v = Math.random();
+          const xOffset = 20.0 + u * 15.0; // 20.0 to 35.0
+          x = isLeft ? -xOffset : xOffset;
+          y = -24.0 + v * 12.0;           // -24.0 to -12.0
+        } else {
+          // Even skyscraper flank column spread
+          const u = Math.random();
+          const v = Math.random();
+          const xOffset = 18.2 + u * 18.0; // 18.2 to 36.2 (leaving center |x| < 18.0 clear for portal reading)
+          x = isLeft ? -xOffset : xOffset;
+          y = (v - 0.5) * 48.0;           // -24.0 to +24.0
+        }
+
+        const z = (Math.random() - 0.5) * 8.0;
+
+        targets[i3 + 0] = x;
+        targets[i3 + 1] = y;
+        targets[i3 + 2] = z;
+      }
       return targets;
     }
 
@@ -1255,6 +1539,15 @@
       starDelays = new Float32Array(starCount);
       for (let i = 0; i < starCount; i++) {
         starDelays[i] = Math.random();
+      }
+
+      // Generate outer flank targets and per-star drift parameters
+      flankTargets = generateFlankTargets(starCount);
+      flankDelays = new Float32Array(starCount);
+      flankSeeds = new Float32Array(starCount);
+      for (let i = 0; i < starCount; i++) {
+        flankDelays[i] = Math.random();
+        flankSeeds[i] = Math.random() * 20.0;
       }
 
       const arms = 2;
@@ -2563,10 +2856,11 @@
       const posAttr = galaxyMesh.geometry.attributes.position;
       const posArr = posAttr.array;
 
-      // Smoothly ease morphProgress toward targetMorph (0.0 = spiral galaxy, 1.0 = assembled NOVA)
+      // Smoothly ease morphProgress and flankProgress
       morphProgress += (targetMorph - morphProgress) * 0.065;
+      flankProgress += (targetFlank - flankProgress) * 0.065;
 
-      // Reveal makeshift nav bar ONLY when user scrolls to completed NOVA text
+      // Reveal makeshift nav bar ONLY when user scrolls to completed NOVA text or beyond
       const makeshiftNav = document.getElementById('makeshift-nav');
       if (makeshiftNav && introComplete) {
         if (morphProgress >= 0.88) {
@@ -2582,7 +2876,39 @@
         }
       }
 
+      // Update Newgrounds retro skyscraper ad sidebars based on flankProgress
+      const leftSkyscraper = document.getElementById('retro-skyscraper-left');
+      const rightSkyscraper = document.getElementById('retro-skyscraper-right');
+      if (leftSkyscraper && rightSkyscraper) {
+        if (flankProgress > 0.12) {
+          leftSkyscraper.classList.remove('opacity-0', 'pointer-events-none');
+          leftSkyscraper.classList.add('opacity-100', 'pointer-events-auto');
+          rightSkyscraper.classList.remove('opacity-0', 'pointer-events-none');
+          rightSkyscraper.classList.add('opacity-100', 'pointer-events-auto');
+        } else {
+          leftSkyscraper.classList.remove('opacity-100', 'pointer-events-auto');
+          leftSkyscraper.classList.add('opacity-0', 'pointer-events-none');
+          rightSkyscraper.classList.remove('opacity-100', 'pointer-events-auto');
+          rightSkyscraper.classList.add('opacity-0', 'pointer-events-none');
+        }
+      }
+
+      // Scroll cue indicating deep space devlogs down below once NOVA is assembled
+      const novaCue = document.getElementById('nova-scroll-cue');
+      if (novaCue) {
+        if (morphProgress > 0.82 && flankProgress < 0.25) {
+          novaCue.classList.remove('opacity-0');
+          novaCue.classList.add('opacity-100');
+        } else {
+          novaCue.classList.remove('opacity-100');
+          novaCue.classList.add('opacity-0');
+        }
+      }
+
       const isMorphing = morphProgress > 0.0005 && novaTargets;
+      const isFlanking = flankProgress > 0.0005 && flankTargets;
+      const aspect = (camera && camera.aspect) ? camera.aspect : 1.0;
+      const flankXScale = aspect < 1.0 ? Math.max(0.48, aspect * 0.68) : 1.0;
 
       for (let i = 0; i < starCount; i++) {
         const i3 = i * 3;
@@ -2612,6 +2938,26 @@
           finalX = THREE.MathUtils.lerp(hx, nx, p) + swirlX;
           finalY = THREE.MathUtils.lerp(hy, ny, p) + swirlY;
           finalZ = THREE.MathUtils.lerp(hz, nz, p);
+        }
+
+        if (isFlanking) {
+          const fDelay = flankDelays[i];
+          const rawFP = THREE.MathUtils.clamp((flankProgress - fDelay * 0.30) / 0.70, 0.0, 1.0);
+          const fp = rawFP * rawFP * (3.0 - 2.0 * rawFP);
+
+          if (fp > 0.0) {
+            const fx = flankTargets[i3 + 0] * flankXScale;
+            const fy = flankTargets[i3 + 1];
+            const fz = flankTargets[i3 + 2];
+
+            // Gentle organic micro-drift when settled into margins
+            const floatX = Math.sin(elapsedTime * 0.5 + flankSeeds[i]) * 0.35;
+            const floatY = Math.cos(elapsedTime * 0.4 + flankSeeds[i]) * 0.35;
+
+            finalX = THREE.MathUtils.lerp(finalX, fx + floatX, fp);
+            finalY = THREE.MathUtils.lerp(finalY, fy + floatY, fp);
+            finalZ = THREE.MathUtils.lerp(finalZ, fz, fp);
+          }
         }
 
         const px = finalX + fluidOffsets[i3 + 0];
@@ -2800,7 +3146,7 @@
             // Gentle celestial drift & mouse reaction when not in close camera focus
             if (!isCameraFocusedOnPlanet) {
               darkPlanetGroup.position.y = darkPlanetBasePos.y + Math.sin(elapsedTime * 0.22) * 0.35;
-              darkPlanetGroup.position.x = darkPlanetBasePos.x + Math.cos(elapsedTime * 0.16) * 0.22;
+              darkPlanetGroup.position.x = darkPlanetBasePos.x + Math.cos(elapsedTime * 0.16) * 0.22 + (flankProgress * 4.0);
               darkPlanetGroup.rotation.y = (mouse2D.x * 0.04);
               darkPlanetGroup.rotation.x = -(mouse2D.y * 0.025);
             }
@@ -2831,10 +3177,13 @@
       cursor3D.set(9999, 9999, 0);
       prevCursor3D.set(9999, 9999, 0);
 
-      // Reset NOVA constellation morph state
+      // Reset NOVA constellation morph state & flank dispersal state
       targetMorph = 0.0;
       morphProgress = 0.0;
+      targetFlank = 0.0;
+      flankProgress = 0.0;
       wheelScrollAccumulator = 0.0;
+      try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch(e) {}
       if (typeof syncConstellationBtn === 'function') syncConstellationBtn();
 
       // Reset camera to initial low angle looking up at top-left
@@ -3342,6 +3691,7 @@
           if (cosmicAudio && cosmicAudio.playClickChime) cosmicAudio.playClickChime();
           window.scrollTo({ top: 0, behavior: 'smooth' });
           targetMorph = 0.0;
+          targetFlank = 0.0;
           wheelScrollAccumulator = 0.0;
         });
       }
@@ -3498,15 +3848,25 @@
       function updateScrollMorph() {
         if (!introComplete) return;
         const pageScrollY = window.scrollY || window.pageYOffset || 0;
-        const maxScroll = Math.max(window.innerHeight * 0.85, 380.0);
-        const scrollProgress = THREE.MathUtils.clamp(pageScrollY / maxScroll, 0.0, 1.0);
-        targetMorph = THREE.MathUtils.clamp(Math.max(scrollProgress, wheelScrollAccumulator), 0.0, 1.0);
+        const vh = window.innerHeight || 800;
+
+        // Stage 1 (0 to 0.85 vh): Spiral Galaxy morphs into Apple-font NOVA
+        const scrollMorph = THREE.MathUtils.clamp(pageScrollY / (vh * 0.85), 0.0, 1.0);
+
+        // Stage 2 (1.15 to 2.0 vh): NOVA stars disperse outward into side flanks / corners
+        const scrollFlank = THREE.MathUtils.clamp((pageScrollY - vh * 1.15) / (vh * 0.85), 0.0, 1.0);
+
+        const wheelMorph = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
+        const wheelFlank = THREE.MathUtils.clamp(wheelScrollAccumulator - 1.0, 0.0, 1.0);
+
+        targetMorph = THREE.MathUtils.clamp(Math.max(scrollMorph, wheelMorph), 0.0, 1.0);
+        targetFlank = THREE.MathUtils.clamp(Math.max(scrollFlank, wheelFlank), 0.0, 1.0);
       }
 
       function onWheelScroll(e) {
         if (!introComplete) return;
         wheelScrollAccumulator += e.deltaY * 0.0024;
-        wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
+        wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 2.0);
         updateScrollMorph();
       }
 
@@ -3517,10 +3877,14 @@
         cosmicAudio.playClickChime();
         if (targetMorph > 0.5) {
           targetMorph = 0.0;
+          targetFlank = 0.0;
           wheelScrollAccumulator = 0.0;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           targetMorph = 1.0;
+          targetFlank = 0.0;
           wheelScrollAccumulator = 1.0;
+          window.scrollTo({ top: (window.innerHeight || 800) * 0.95, behavior: 'smooth' });
         }
         syncConstellationBtn();
         showToast(targetMorph > 0.5 ? "// CONSTELLATION ASSEMBLED: NOVA (APPLE TYPOGRAPHY)" : "// STARS DISPERSED INTO SPIRAL GALAXY");
