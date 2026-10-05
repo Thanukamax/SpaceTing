@@ -6,6 +6,11 @@
   <title>Astra // Signals from the Void — Model Context Protocol Registry</title>
   <meta name="description" content="A curated registry of Model Context Protocols drifting across the network. High-fidelity cosmic telemetry, procedural ambient drift, and system gateways.">
 
+  <!-- Editorial Google Typography: Instrument Serif, Plus Jakarta Sans, Space Grotesk, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:ital,wght@0,300..700;1,300..700&family=Plus+Jakarta+Sans:ital,wght@0,300..700;1,300..700&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -47,7 +52,7 @@
           },
           fontFamily: {
             serif: ['"Instrument Serif"', 'Georgia', 'serif'],
-            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', '"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
             display: ['"Space Grotesk"', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace']
           },
@@ -257,110 +262,14 @@
     </button>
   </header>
 
-  <!-- TOP-RIGHT CELESTIAL ADDON (MCP WASM 3D DARK PLANET) -->
-  <aside id="celestial-addon-root" class="fixed top-5 right-5 sm:top-6 sm:right-8 z-50 flex flex-col items-end pointer-events-auto transition-all duration-700">
-    <!-- Top-Right Row: Addon Pill + Crescent Moon Ambient Toggle -->
-    <div class="flex items-center gap-2.5">
-      <!-- MCP 3D PLANET ADDON PILL -->
-      <button id="planet-addon-toggle" 
-              class="group flex items-center gap-2 px-3.5 py-2 rounded-full glass-card border border-white/10 hover:border-cyan-400/50 bg-void-900/75 hover:bg-void-850/90 backdrop-blur-xl text-slate-200 hover:text-white transition-all duration-300 shadow-2xl active:scale-95 cursor-pointer"
-              aria-label="Celestial Addon: Noctis-IX 3D Model"
-              title="Inspect MCP 3D Dark Planet">
-        <!-- Animated mini-planet icon with orbit ring -->
-        <div class="relative w-5 h-5 flex items-center justify-center pointer-events-none">
-          <div class="absolute inset-0 rounded-full border border-cyan-400/40 group-hover:border-cyan-300 transform -rotate-45 scale-x-125 transition-all"></div>
-          <div class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-800 shadow-[0_0_8px_rgba(34,211,238,0.4)]"></div>
-          <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        </div>
-        <div class="flex flex-col items-start leading-none pointer-events-none">
-          <span class="text-[11px] font-mono font-bold tracking-wider text-slate-200 group-hover:text-cyan-300 transition-colors">NOCTIS-IX</span>
-          <span class="text-[8.5px] font-mono tracking-widest text-slate-400 group-hover:text-slate-300 uppercase">MCP 3D ADDON</span>
-        </div>
-        <i data-lucide="chevron-down" id="addon-chevron" class="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-transform duration-300 ml-0.5 pointer-events-none"></i>
-      </button>
-
-      <!-- Top-Right: Crescent Moon (Ambient Audio & Drift) -->
-      <button id="nav-moon-btn" 
-              class="group p-2.5 rounded-full glass-card border border-white/10 hover:border-starlight/50 bg-void-900/60 hover:bg-void-850/80 backdrop-blur-xl text-starlight hover:text-white transition-all duration-300 shadow-2xl active:scale-95 flex items-center justify-center cursor-pointer pointer-events-auto"
-              aria-label="Celestial Sound & Mood"
-              title="Toggle Ambient Drift">
-        <i data-lucide="moon" class="w-4 h-4 text-starlight/90 group-hover:text-white transition-transform group-hover:rotate-12 duration-300"></i>
-      </button>
-    </div>
-
-    <!-- Expandable Telemetry & Control Drawer -->
-    <div id="planet-addon-drawer" class="hidden mt-2.5 w-72 sm:w-80 glass-card border border-white/15 bg-void-950/90 backdrop-blur-2xl rounded-2xl p-4 shadow-2xl transition-all duration-300 flex-col gap-3 text-left">
-      <!-- Header -->
-      <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
-        <div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-xs font-mono font-bold text-white tracking-wider">EXOPLANET NOCTIS-IX</span>
-            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">WASM CAD</span>
-          </div>
-          <div class="text-[10px] text-slate-400 font-mono mt-0.5">Synthesized via simple-3d-modeling-mcp</div>
-        </div>
-        <button id="addon-close-btn" class="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer" title="Close Panel">
-          <i data-lucide="x" class="w-3.5 h-3.5"></i>
-        </button>
-      </div>
-
-      <!-- Telemetry Grid -->
-      <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
-        <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
-          <span class="text-slate-500 block">CORE DIAMETER</span>
-          <span class="text-starlight font-semibold">240,000 km</span>
-        </div>
-        <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
-          <span class="text-slate-500 block">RING SPAN</span>
-          <span class="text-starlight font-semibold">680,000 km</span>
-        </div>
-        <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
-          <span class="text-slate-500 block">AXIAL INCLINE</span>
-          <span class="text-cyan-300 font-semibold">34.8° TILT</span>
-        </div>
-        <div class="bg-void-900/60 p-2 rounded-lg border border-white/5">
-          <span class="text-slate-500 block">LIGHTING</span>
-          <span class="text-cyan-300 font-semibold">Backlit Eclipse</span>
-        </div>
-      </div>
-
-      <!-- Interactive Controls -->
-      <div class="flex flex-col gap-2 pt-1 border-t border-white/10">
-        <!-- CAD Wireframe Toggle -->
-        <button id="addon-wireframe-btn" class="flex items-center justify-between px-3 py-2 rounded-xl bg-void-900/70 hover:bg-void-850 border border-white/10 hover:border-cyan-400/40 text-xs font-mono text-slate-200 transition-all cursor-pointer">
-          <span class="flex items-center gap-2">
-            <i data-lucide="box" class="w-3.5 h-3.5 text-cyan-400"></i>
-            <span>Holographic CAD Wireframe</span>
-          </span>
-          <span id="wireframe-status" class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400">OFF</span>
-        </button>
-
-        <!-- Focus Camera on Planet -->
-        <button id="addon-focus-btn" class="flex items-center justify-between px-3 py-2 rounded-xl bg-void-900/70 hover:bg-void-850 border border-white/10 hover:border-starlight/40 text-xs font-mono text-slate-200 transition-all cursor-pointer">
-          <span class="flex items-center gap-2">
-            <i data-lucide="compass" class="w-3.5 h-3.5 text-starlight"></i>
-            <span id="focus-btn-text">Cinematic Focus Camera</span>
-          </span>
-          <i data-lucide="chevron-right" id="focus-chevron" class="w-3.5 h-3.5 text-slate-400 transition-transform"></i>
-        </button>
-
-        <!-- Spin Speed Controls -->
-        <div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-void-900/50 border border-white/5 text-[11px] font-mono text-slate-400">
-          <span>ORBIT SPEED</span>
-          <div class="flex items-center gap-1.5">
-            <button class="speed-btn px-2 py-0.5 rounded bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-colors cursor-pointer" data-speed="0.5">0.5x</button>
-            <button class="speed-btn px-2 py-0.5 rounded bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-bold cursor-pointer" data-speed="1.0">1.0x</button>
-            <button class="speed-btn px-2 py-0.5 rounded bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-colors cursor-pointer" data-speed="2.5">2.5x</button>
-          </div>
-        </div>
-
-        <!-- Download STL Asset -->
-        <a href="assets/dark_planet_rings.stl" download="noctis_ix_dark_planet_mcp.stl" class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-950/40 via-indigo-950/40 to-void-900/40 hover:from-cyan-900/50 hover:to-indigo-900/50 border border-cyan-500/30 hover:border-cyan-400/60 text-xs font-mono text-cyan-200 transition-all cursor-pointer mt-1">
-          <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i>
-          <span>Download 3D STL Model (3.8MB)</span>
-        </a>
-      </div>
-    </div>
+  <!-- TOP-RIGHT MINIMAL AMBIENT AUDIO TOGGLE -->
+  <aside class="fixed top-5 right-5 sm:top-6 sm:right-8 z-50 pointer-events-auto">
+    <button id="nav-moon-btn" 
+            class="group p-3 rounded-full glass-card border border-white/10 hover:border-starlight/50 bg-void-900/60 hover:bg-void-850/80 backdrop-blur-xl text-starlight hover:text-white transition-all duration-300 shadow-2xl active:scale-95 flex items-center justify-center cursor-pointer pointer-events-auto"
+            aria-label="Celestial Sound & Mood"
+            title="Toggle Ambient Drift">
+      <i data-lucide="moon" class="w-4 h-4 text-starlight/90 group-hover:text-white transition-transform group-hover:rotate-12 duration-300"></i>
+    </button>
   </aside>
 
 
@@ -374,174 +283,219 @@
     </div>
   </div>
 
-  <!-- CENTRAL PAGE CONTENT: DEVLOGS, BLOGS & RETRO PORTAL FEED -->
+  <!-- CENTRAL PAGE CONTENT: EDITORIAL DEEP SPACE DISPATCHES -->
   <main id="portal-content-section" class="relative z-30 w-full min-h-screen pointer-events-auto">
-    <div class="max-w-2xl lg:max-w-3xl mx-auto px-4 sm:px-6 pb-32 flex flex-col gap-8">
+    <div class="max-w-3xl mx-auto px-5 sm:px-8 pb-36 flex flex-col gap-10">
       
-      <!-- Portal Banner Header -->
-      <div class="glass-card border border-white/15 bg-void-950/85 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-        <div class="absolute -right-8 -top-8 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
-        <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
-          <div class="flex items-center gap-2 font-mono text-xs text-slate-400">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-            <span class="text-cyan-300 font-bold">TRANSMISSION CHANNEL // 0x7E3</span>
+      <!-- Editorial Masthead Header -->
+      <header class="border-t border-b border-white/[0.08] py-8 sm:py-12 flex flex-col gap-3">
+        <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-starlight animate-pulse"></span>
+            <span class="tracking-[0.25em] text-starlight/80 uppercase text-[10px]">DEEP SPACE OBSERVATORY</span>
           </div>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-starlight">PORTAL FEED V2.4</span>
+          <span class="tracking-widest text-[10px] text-slate-500 uppercase font-mono">ISSUE // 01 &bull; OCT 2026</span>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-serif text-white tracking-wide starlight-glow">DEEP SPACE DISPATCHES & DEVLOGS</h1>
-        <p class="mt-2 text-xs sm:text-sm text-slate-300 font-mono leading-relaxed">
-          Chronicles from the outer rim: procedural point sprite raytracing, binaural audio synthesis, and field observations of planetary anomalies.
-        </p>
-      </div>
 
-      <!-- Post 1: WebGL Point Sprite Raytracing -->
-      <article class="glass-card border border-white/10 hover:border-cyan-400/40 bg-void-900/80 backdrop-blur-xl rounded-2xl p-6 sm:p-7 shadow-2xl transition-all duration-300 flex flex-col gap-4">
-        <div class="flex items-center justify-between text-xs font-mono">
-          <span class="px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">DEVLOG #042</span>
-          <span class="text-slate-400">OCTOBER 01, 2026</span>
-        </div>
-        <h2 class="text-lg sm:text-xl font-sans font-bold text-white tracking-wide hover:text-cyan-300 transition-colors">
-          16,000 Celestial Bodies in a Single WebGL Draw Call
-        </h2>
-        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
-          Rendering thousands of independent 3D meshes crushes frame rates due to CPU-GPU draw call bottlenecks. Instead, we raytraced true 3D spherical volumes inside point sprite billboards directly in GLSL fragment shaders.
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-serif text-white tracking-tight leading-[1.08] mt-2">
+          Dispatches from the <span class="italic font-normal text-starlight">Outer Rim</span>
+        </h1>
+
+        <p class="text-xs sm:text-sm font-sans text-slate-300 leading-relaxed font-light max-w-xl mt-1">
+          Field notes on GPU point-sprite volume raytracing, real-time microtonal audio synthesis, and the Keplerian mechanics of Noctis-IX.
         </p>
-        <div class="p-3.5 rounded-xl bg-void-950/90 border border-white/10 font-mono text-[11px] text-cyan-200 overflow-x-auto">
-          <code>float z = sqrt(max(0.0, rSphere * rSphere - dist * dist));<br>vec3 norm = normalize(vec3(coord.x, -coord.y, z));<br>float NdotL = dot(norm, normalize(uSunDirection));</code>
+      </header>
+
+      <!-- Entry 01: Graphics Architecture -->
+      <article class="relative rounded-2xl border border-white/[0.08] bg-[#080B14]/85 backdrop-blur-2xl p-7 sm:p-9 shadow-2xl transition-all duration-300 hover:border-white/[0.18] flex flex-col gap-5 group">
+        <!-- Top metadata -->
+        <div class="flex items-center justify-between font-mono text-[11px]">
+          <span class="tracking-[0.2em] text-cyan-300/90 font-medium uppercase">[ 01 // GRAPHICS ARCHITECTURE ]</span>
+          <span class="text-slate-500 tracking-wider">OCTOBER 2026</span>
         </div>
-        <div class="flex items-center justify-between border-t border-white/10 pt-3 text-[11px] font-mono text-slate-400">
-          <span>CMDR. THANUKA</span>
-          <div class="flex items-center gap-3">
-            <span class="text-amber-300 font-bold">★★★★★ 4.96/5</span>
-            <span>48 COMMENTS</span>
+
+        <!-- Headline -->
+        <h2 class="text-2xl sm:text-3xl font-serif text-white tracking-tight leading-snug group-hover:text-cyan-200 transition-colors">
+          16,000 Celestial Bodies in a <span class="italic font-normal">Single Draw Call</span>
+        </h2>
+
+        <!-- Body copy -->
+        <p class="text-xs sm:text-sm font-sans text-slate-300 leading-relaxed font-light">
+          Rendering thousands of independent 3D meshes crushes frame rates due to CPU draw-call dispatch overhead. To achieve 60 FPS across both desktop and mobile viewports, we collapsed the entire planetary system into point sprite billboards, calculating true 3D spherical volumes and Lambertian illumination entirely within the GLSL fragment stage.
+        </p>
+
+        <!-- Code snippet: Clean dark console -->
+        <div class="rounded-xl bg-[#04060A] border border-white/[0.08] overflow-hidden text-xs font-mono">
+          <div class="flex items-center justify-between px-3.5 py-2 border-b border-white/[0.06] bg-white/[0.02] text-[10px] text-slate-400">
+            <span class="flex items-center gap-1.5 text-slate-300">
+              <span class="w-2 h-2 rounded-full bg-cyan-400/40"></span>
+              core_raymarch.frag
+            </span>
+            <button onclick="navigator.clipboard.writeText('float z = sqrt(max(0.0, rSphere * rSphere - dist * dist));\nvec3 norm = normalize(vec3(coord.x, -coord.y, z));\nfloat NdotL = max(0.0, dot(norm, normalize(uLightDir)));'); if(window.showToast) window.showToast('// GLSL SHADER COPIED TO CLIPBOARD');"
+                    class="px-2 py-0.5 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer text-[10px]">
+              COPY
+            </button>
           </div>
+          <div class="p-3.5 overflow-x-auto text-[11px] leading-relaxed text-slate-300">
+            <span class="text-slate-500">// 1. Reconstruct spherical surface normal from 2D coordinates</span><br>
+            <span class="text-starlight font-medium">float</span> z = <span class="text-cyan-300">sqrt</span>(<span class="text-cyan-300">max</span>(<span class="text-amber-300">0.0</span>, rSphere * rSphere - dist * dist));<br>
+            <span class="text-starlight font-medium">vec3</span> norm = <span class="text-cyan-300">normalize</span>(<span class="text-starlight font-medium">vec3</span>(coord.x, -coord.y, z));<br>
+            <span class="text-slate-500">// 2. Single-pass Lambertian light incidence with forward scattering</span><br>
+            <span class="text-starlight font-medium">float</span> NdotL = <span class="text-cyan-300">max</span>(<span class="text-amber-300">0.0</span>, <span class="text-cyan-300">dot</span>(norm, <span class="text-cyan-300">normalize</span>(uSunDirection)));
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[11px] font-mono text-slate-400">
+          <span class="tracking-wider uppercase">CMDR. THANUKA</span>
+          <span class="text-slate-500">SPEC: GLSL ES 3.0 // 4 MIN READ</span>
         </div>
       </article>
 
-      <!-- Post 2: Binaural Audio Synthesis -->
-      <article class="glass-card border border-white/10 hover:border-starlight/40 bg-void-900/80 backdrop-blur-xl rounded-2xl p-6 sm:p-7 shadow-2xl transition-all duration-300 flex flex-col gap-4">
-        <div class="flex items-center justify-between text-xs font-mono">
-          <span class="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-bold">AUDIO SYNTHESIS</span>
-          <span class="text-slate-400">SEPTEMBER 28, 2026</span>
+      <!-- Entry 02: Wave Acoustics -->
+      <article class="relative rounded-2xl border border-white/[0.08] bg-[#080B14]/85 backdrop-blur-2xl p-7 sm:p-9 shadow-2xl transition-all duration-300 hover:border-white/[0.18] flex flex-col gap-5 group">
+        <!-- Top metadata -->
+        <div class="flex items-center justify-between font-mono text-[11px]">
+          <span class="tracking-[0.2em] text-purple-300/90 font-medium uppercase">[ 02 // WAVE ACOUSTICS ]</span>
+          <span class="text-slate-500 tracking-wider">SEPTEMBER 2026</span>
         </div>
-        <h2 class="text-lg sm:text-xl font-sans font-bold text-white tracking-wide hover:text-starlight transition-colors">
-          The Sound of Deep Space: Binaural Oscillation & 432Hz Core
+
+        <!-- Headline -->
+        <h2 class="text-2xl sm:text-3xl font-serif text-white tracking-tight leading-snug group-hover:text-purple-200 transition-colors">
+          The Sound of the Void: <span class="italic font-normal">Binaural Oscillation & 432Hz Core</span>
         </h2>
-        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
-          Space may be a vacuum, but electromagnetic radiation translated into audio creates deeply hypnotic soundscapes. Our Web Audio engine synthesizes organic binaural frequency shifts and stellar chord progressions in real time.
+
+        <!-- Body copy -->
+        <p class="text-xs sm:text-sm font-sans text-slate-300 leading-relaxed font-light">
+          While deep space remains a physical vacuum, interstellar electromagnetic waves translated into audible frequencies reveal deeply hypnotic harmonics. Our pure Web Audio API engine synthesizes organic binaural frequency deltas and generative Satie chord progressions in real time without audio sample assets.
         </p>
-        <div class="flex items-center gap-3 pt-1">
-          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// PULSAR CHIME TRIGGERED (432Hz)');" 
-                  class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-xs font-mono text-purple-200 transition-all cursor-pointer">
+
+        <!-- Interactive Audio Panel -->
+        <div class="p-4 rounded-xl bg-[#04060A] border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-300">
+              <i data-lucide="radio" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <span class="text-xs font-mono font-medium text-white block">CORE FREQUENCY: 432.00 Hz</span>
+              <span class="text-[10px] font-mono text-slate-500">BINAURAL DRIFT: &plusmn;0.12 Hz &bull; 6-POLE REVERB</span>
+            </div>
+          </div>
+
+          <button onclick="if(window.cosmicAudio) { const playing = window.cosmicAudio.toggle(); if(window.showToast) window.showToast(playing ? '// HARMONIC ENGINE ACTIVATED (432Hz)' : '// HARMONIC ENGINE MUTED'); if(window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); }"
+                  class="px-4 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-xs font-mono text-purple-200 font-medium tracking-wide transition-all cursor-pointer flex items-center gap-2">
             <i data-lucide="play" class="w-3.5 h-3.5"></i>
-            <span>TRANSMIT AUDIO PULSE</span>
+            <span>TOGGLE SOUNDSCAPE</span>
           </button>
-          <span class="text-[11px] font-mono text-slate-400">Pure Web Audio API Synthesizer</span>
         </div>
-        <div class="flex items-center justify-between border-t border-white/10 pt-3 text-[11px] font-mono text-slate-400">
-          <span>AUDIO DIVISION</span>
-          <div class="flex items-center gap-3">
-            <span class="text-amber-300 font-bold">★★★★★ 4.92/5</span>
-            <span>32 COMMENTS</span>
-          </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[11px] font-mono text-slate-400">
+          <span class="tracking-wider uppercase">AUDIO DIVISION</span>
+          <span class="text-slate-500">DYNAMIC SYNTHESIZER</span>
         </div>
       </article>
 
-      <!-- Post 3: Field Survey Noctis-IX -->
-      <article class="glass-card border border-white/10 hover:border-amber-400/40 bg-void-900/80 backdrop-blur-xl rounded-2xl p-6 sm:p-7 shadow-2xl transition-all duration-300 flex flex-col gap-4">
-        <div class="flex items-center justify-between text-xs font-mono">
-          <span class="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">FIELD SURVEY</span>
-          <span class="text-slate-400">SEPTEMBER 24, 2026</span>
+      <!-- Entry 03: Deep Field Telemetry -->
+      <article class="relative rounded-2xl border border-white/[0.08] bg-[#080B14]/85 backdrop-blur-2xl p-7 sm:p-9 shadow-2xl transition-all duration-300 hover:border-white/[0.18] flex flex-col gap-5 group">
+        <!-- Top metadata -->
+        <div class="flex items-center justify-between font-mono text-[11px]">
+          <span class="tracking-[0.2em] text-amber-300/90 font-medium uppercase">[ 03 // DEEP FIELD TELEMETRY ]</span>
+          <span class="text-slate-500 tracking-wider">SEPTEMBER 2026</span>
         </div>
-        <h2 class="text-lg sm:text-xl font-sans font-bold text-white tracking-wide hover:text-amber-300 transition-colors">
-          Noctis-IX: The Colossal Backlit Obsidian Gas Giant
+
+        <!-- Headline -->
+        <h2 class="text-2xl sm:text-3xl font-serif text-white tracking-tight leading-snug group-hover:text-amber-200 transition-colors">
+          Noctis-IX: The Colossal <span class="italic font-normal">Backlit Obsidian Giant</span>
         </h2>
-        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
-          Discovered at the outer rim, Noctis-IX features a 680,000km ring span composed of 3,000 Keplerian asteroids synthesized via OpenSCAD & Three.js. Its backlit eclipse atmosphere exhibits dramatic forward scattering.
+
+        <!-- Body copy -->
+        <p class="text-xs sm:text-sm font-sans text-slate-300 leading-relaxed font-light">
+          Discovered at the galactic boundary, Noctis-IX features a 680,000 km ring span composed of 3,000 Keplerian asteroids synthesized via OpenSCAD & Three.js. Positioned in extreme backlighting, its deep methane atmosphere generates dramatic forward Mie scattering.
         </p>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-mono">
-          <div class="p-2.5 rounded-lg bg-void-950/80 border border-white/5">
-            <span class="text-slate-500 text-[10px] block">CORE DIAMETER</span>
-            <span class="text-white font-bold">240,000 km</span>
+
+        <!-- Scientific Telemetry Matrix -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs">
+          <div class="p-3 rounded-xl bg-[#04060A] border border-white/[0.06]">
+            <span class="text-[9.5px] text-slate-500 uppercase tracking-wider block">CORE DIAMETER</span>
+            <span class="text-white font-medium text-sm mt-0.5 block">240,000 km</span>
           </div>
-          <div class="p-2.5 rounded-lg bg-void-950/80 border border-white/5">
-            <span class="text-slate-500 text-[10px] block">RING SPAN</span>
-            <span class="text-starlight font-bold">680,000 km</span>
+          <div class="p-3 rounded-xl bg-[#04060A] border border-white/[0.06]">
+            <span class="text-[9.5px] text-slate-500 uppercase tracking-wider block">RING SPAN</span>
+            <span class="text-starlight font-medium text-sm mt-0.5 block">680,000 km</span>
           </div>
-          <div class="p-2.5 rounded-lg bg-void-950/80 border border-white/5">
-            <span class="text-slate-500 text-[10px] block">AXIAL TILT</span>
-            <span class="text-cyan-300 font-bold">34.8°</span>
+          <div class="p-3 rounded-xl bg-[#04060A] border border-white/[0.06]">
+            <span class="text-[9.5px] text-slate-500 uppercase tracking-wider block">AXIAL INCLINE</span>
+            <span class="text-cyan-300 font-medium text-sm mt-0.5 block">34.8°</span>
           </div>
-          <div class="p-2.5 rounded-lg bg-void-950/80 border border-white/5">
-            <span class="text-slate-500 text-[10px] block">ATMOSPHERE</span>
-            <span class="text-emerald-400 font-bold">Methane Haze</span>
+          <div class="p-3 rounded-xl bg-[#04060A] border border-white/[0.06]">
+            <span class="text-[9.5px] text-slate-500 uppercase tracking-wider block">HAZE LAYER</span>
+            <span class="text-emerald-400 font-medium text-sm mt-0.5 block">Methane</span>
           </div>
         </div>
-        <div class="flex items-center justify-between border-t border-white/10 pt-3 text-[11px] font-mono text-slate-400">
-          <span>EXPEDITION CORPS</span>
-          <div class="flex items-center gap-3">
-            <span class="text-amber-300 font-bold">★★★★★ 5.00/5</span>
-            <span>74 COMMENTS</span>
-          </div>
+
+        <!-- 3D Model Download Link -->
+        <div class="pt-1">
+          <a href="assets/dark_planet_rings.stl" download="noctis_ix_dark_planet_mcp.stl" 
+             class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.2] text-xs font-mono text-starlight hover:text-white transition-all cursor-pointer">
+            <i data-lucide="download" class="w-3.5 h-3.5 text-starlight"></i>
+            <span>Download Noctis-IX 3D CAD Asset (.STL &bull; 3.8MB)</span>
+          </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[11px] font-mono text-slate-400">
+          <span class="tracking-wider uppercase">EXPEDITION CORPS</span>
+          <span class="text-slate-500">KEPLERIAN ACCRETION SWARM</span>
         </div>
       </article>
 
-      <!-- Classic Newgrounds Community Voting Box -->
-      <div class="glass-card border border-white/15 bg-void-950/90 backdrop-blur-2xl rounded-2xl p-5 sm:p-6 text-center shadow-2xl flex flex-col items-center gap-3">
-        <span class="text-xs font-mono font-bold text-white tracking-wider uppercase">HOW WOULD YOU RATE THIS CELESTIAL PORTAL?</span>
-        <div class="flex items-center gap-2">
-          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 0.0 (BLAM INITIATED)');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-slate-400 font-bold transition-all cursor-pointer">0</button>
-          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 1.0');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-slate-300 font-bold transition-all cursor-pointer">1</button>
-          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 2.0');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-starlight font-bold transition-all cursor-pointer">2</button>
-          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 3.0');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-starlight font-bold transition-all cursor-pointer">3</button>
-          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 4.0');" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-sm font-mono text-cyan-300 font-bold transition-all cursor-pointer">4</button>
-          <button onclick="if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// VOTE RECORDED: 5.0 ★ // MAXIMUM PORTAL RATING!');" class="w-10 h-10 rounded-xl bg-cyan-500/25 hover:bg-cyan-500/35 border border-cyan-400/50 text-sm font-mono text-cyan-200 font-bold shadow-lg shadow-cyan-500/20 transition-all cursor-pointer">5</button>
+      <!-- Observational Logbook & Community Transmissions -->
+      <section class="rounded-2xl border border-white/[0.08] bg-[#080B14]/85 backdrop-blur-2xl p-7 sm:p-9 shadow-2xl flex flex-col gap-6">
+        <div class="flex items-center justify-between border-b border-white/[0.06] pb-4">
+          <div>
+            <span class="text-xs font-mono tracking-[0.2em] text-starlight/80 uppercase font-medium">OBSERVATORY LOGBOOK</span>
+            <p class="text-[11px] font-mono text-slate-500 mt-0.5">Transmissions recorded across the outer sector</p>
+          </div>
+          <!-- Resonance Upvote Trigger -->
+          <button id="resonance-btn" 
+                  onclick="const c = document.getElementById('resonance-count'); if(c) c.textContent = parseInt(c.textContent || '428') + 1; if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// RESONANCE PULSE RECORDED (+1)');"
+                  class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-mono text-starlight hover:text-white transition-all cursor-pointer">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-starlight"></i>
+            <span>RESONATE</span>
+            <span id="resonance-count" class="text-starlight font-bold">428</span>
+          </button>
         </div>
-        <span class="text-[10px] font-mono text-slate-400">DON'T BLAM! PROTECT EXCELLENT CONTENT ON THE CELESTIAL PORTAL.</span>
-      </div>
 
-      <!-- Comment Section Feed -->
-      <div class="glass-card border border-white/10 bg-void-900/70 backdrop-blur-xl rounded-2xl p-6 flex flex-col gap-4 shadow-xl">
-        <div class="flex items-center justify-between border-b border-white/10 pb-3">
-          <span class="text-xs font-mono font-bold text-white tracking-wider uppercase">COMMUNITY TRANSMISSIONS</span>
-          <span class="text-[11px] font-mono text-slate-400">48 DISPATCHES</span>
-        </div>
-        
-        <div class="flex flex-col gap-3 text-xs">
-          <div class="p-3 rounded-xl bg-void-950/60 border border-white/5 flex flex-col gap-1">
-            <div class="flex items-center justify-between text-slate-400 font-mono text-[10px]">
-              <span class="text-cyan-300 font-bold">xX_StarGazer_Xx</span>
-              <span>2 hours ago</span>
+        <!-- Dispatches Feed -->
+        <div id="dispatches-feed" class="flex flex-col gap-3 font-mono text-xs">
+          <div class="p-3.5 rounded-xl bg-[#04060A] border border-white/[0.05] flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-slate-500 text-[10px]">
+              <span class="text-cyan-300 font-semibold tracking-wide">OBS-STATION // KEP-04</span>
+              <span>05.10.2026 // 11:42 UTC</span>
             </div>
-            <p class="text-slate-300 font-sans">The ring shadows on the right planet are insane. 5/5 definitely frontpage worthy.</p>
+            <p class="text-slate-300 font-sans text-xs leading-relaxed font-light">The Keplerian shadow gradient across the inner asteroid ring is photometrically accurate. Beautiful shader implementation.</p>
           </div>
 
-          <div class="p-3 rounded-xl bg-void-950/60 border border-white/5 flex flex-col gap-1">
-            <div class="flex items-center justify-between text-slate-400 font-mono text-[10px]">
-              <span class="text-amber-300 font-bold">Pico_Official</span>
-              <span>5 hours ago</span>
+          <div class="p-3.5 rounded-xl bg-[#04060A] border border-white/[0.05] flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-slate-500 text-[10px]">
+              <span class="text-starlight font-semibold tracking-wide">OUTPOST // T-808</span>
+              <span>04.10.2026 // 19:15 UTC</span>
             </div>
-            <p class="text-slate-300 font-sans">Can confirm the binaural audio gave me chills. Don't blam this masterpiece!</p>
-          </div>
-
-          <div class="p-3 rounded-xl bg-void-950/60 border border-white/5 flex flex-col gap-1">
-            <div class="flex items-center justify-between text-slate-400 font-mono text-[10px]">
-              <span class="text-purple-300 font-bold">NebulaDrifter_99</span>
-              <span>1 day ago</span>
-            </div>
-            <p class="text-slate-300 font-sans">Loving the old Newgrounds side banners. The stars on the sides feel alive.</p>
+            <p class="text-slate-300 font-sans text-xs leading-relaxed font-light">Binaural drone frequency shifts sync seamlessly with cursor motion. Captures the silence of deep space.</p>
           </div>
         </div>
 
-        <!-- Transmit Comment Input -->
-        <div class="mt-2 flex gap-2">
-          <input type="text" id="newgrounds-comment-input" placeholder="Type a transmission..." class="flex-1 px-3.5 py-2 rounded-xl bg-void-950 border border-white/10 focus:border-cyan-400/50 text-xs text-white placeholder-slate-500 font-mono outline-none">
-          <button onclick="const el = document.getElementById('newgrounds-comment-input'); if(el && el.value.trim()){ if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// DISPATCH TRANSMITTED TO RELAY'); el.value=''; }" 
-                  class="px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-xs font-mono text-cyan-200 font-bold uppercase transition-all cursor-pointer">
+        <!-- Transmit Entry Form -->
+        <div class="flex gap-2.5 pt-2">
+          <input type="text" id="dispatch-input" placeholder="Record observation into the logbook..." 
+                 class="flex-1 px-4 py-2.5 rounded-xl bg-[#04060A] border border-white/[0.08] focus:border-starlight/40 text-xs text-white placeholder-slate-500 font-mono outline-none transition-all">
+          <button onclick="const el = document.getElementById('dispatch-input'); const feed = document.getElementById('dispatches-feed'); if(el && el.value.trim()){ const text = el.value.trim(); const item = document.createElement('div'); item.className = 'p-3.5 rounded-xl bg-[#04060A] border border-starlight/20 flex flex-col gap-1.5'; item.innerHTML = `<div class='flex items-center justify-between text-slate-500 text-[10px]'><span class='text-starlight font-semibold tracking-wide'>EXPLORER // VISITOR</span><span>JUST NOW</span></div><p class='text-slate-200 font-sans text-xs leading-relaxed font-light'>${text.replace(/</g,'&lt;')}</p>`; feed.prepend(item); if(window.cosmicAudio && window.cosmicAudio.playClickChime) window.cosmicAudio.playClickChime(); if(window.showToast) window.showToast('// OBSERVATION LOGGED IN DISPATCH ARCHIVE'); el.value=''; }" 
+                  class="px-5 py-2.5 rounded-xl bg-starlight/15 hover:bg-starlight/25 border border-starlight/30 text-xs font-mono text-starlight font-semibold uppercase tracking-wider transition-all cursor-pointer">
             TRANSMIT
           </button>
         </div>
-      </div>
+      </section>
 
     </div>
   </main>
