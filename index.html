@@ -276,14 +276,14 @@
 
   <!-- HERO SCROLL STAGE: Segment 1 (Galaxy ⇄ NOVA) -->
   <div id="hero-scroll-stage" class="relative w-full pointer-events-none" style="height: 100vh;">
-    <!-- Segment Hard-Stop Indicator & Scroll Cue prompting to scroll up into Portal Content -->
+    <!-- Segment Hard-Stop Indicator & Scroll Cue prompting to scroll down into Portal Content -->
     <div id="nova-scroll-cue" 
          class="fixed bottom-10 left-0 right-0 flex flex-col items-center justify-center gap-2 pointer-events-none opacity-0 transition-all duration-500 z-40 cursor-pointer">
       <div class="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-[#12141B]/95 border border-white/[0.14] hover:border-white/[0.35] shadow-[0_8px_32px_rgba(0,0,0,0.8)] backdrop-blur-xl transition-all group">
-        <i data-lucide="chevron-up" class="w-4 h-4 text-starlight animate-bounce"></i>
-        <span class="text-xs font-sans tracking-wider text-white font-medium">SCROLL UP TO LOAD CONTENT</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-starlight animate-bounce"></i>
+        <span class="text-xs font-sans tracking-wider text-white font-medium">SCROLL TO LOAD CONTENT</span>
       </div>
-      <span class="text-[10px] font-sans tracking-wide text-slate-400">or click to view dispatches</span>
+      <span class="text-[10px] font-sans tracking-wide text-slate-400">or click to explore articles</span>
     </div>
   </div>
 
@@ -936,10 +936,12 @@
     let targetFlank = 0.0;
     let flankProgress = 0.0;
 
-    // Segment Navigation Architecture (Galaxy ⇄ NOVA Hard-Stop -> Scroll Up to Content)
+    // Segment Navigation Architecture (Galaxy ⇄ NOVA Hard-Stop -> Scroll to Content)
     const SEGMENT_HERO = 0;    // Segment 1: Galaxy ⇄ NOVA (stops at NOVA)
     const SEGMENT_CONTENT = 1; // Segment 2: Flank Stars + Clean Blog Layout
     let currentSegment = SEGMENT_HERO;
+    let novaStopTimestamp = 0;
+    let isTransitioning = false;
 
 
 
@@ -2487,22 +2489,28 @@
         mouse2D.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
 
         // Mobile touch swipe gestures drive segmented Galaxy ⇄ NOVA ⇄ Content transitions
-        if (introComplete) {
+        if (introComplete && !isTransitioning) {
           const deltaY = touchStartY - e.touches[0].clientY;
           touchStartY = e.touches[0].clientY;
 
           if (currentSegment === SEGMENT_HERO) {
-            if (deltaY > 0) {
-              // Swiping up (scrolling down toward NOVA)
+            if (wheelScrollAccumulator < 1.0) {
+              // Advancing toward NOVA or reversing to Galaxy
               wheelScrollAccumulator += deltaY * 0.0035;
               wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
               targetMorph = wheelScrollAccumulator;
               targetFlank = 0.0;
-            } else if (deltaY < -15) {
-              // Swiping down (scrolling up)
-              if (wheelScrollAccumulator >= 0.95) {
+              if (wheelScrollAccumulator >= 1.0) {
+                novaStopTimestamp = Date.now();
+              }
+            } else {
+              // At NOVA: enforce 350ms hard-stop pause before allowing scroll to content
+              if (Date.now() - novaStopTimestamp < 350) return;
+              if (deltaY > 8) {
+                // Swiping up to proceed to content!
                 if (typeof unlockContentSegment === 'function') unlockContentSegment();
-              } else {
+              } else if (deltaY < -12) {
+                // Swiping down to reverse to Galaxy!
                 wheelScrollAccumulator += deltaY * 0.0035;
                 wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
                 targetMorph = wheelScrollAccumulator;
@@ -2511,7 +2519,7 @@
             }
           } else if (currentSegment === SEGMENT_CONTENT) {
             const pageScrollY = window.scrollY || window.pageYOffset || 0;
-            if (pageScrollY <= 2 && deltaY < -35) {
+            if (pageScrollY <= 80 && deltaY < -10) {
               if (typeof returnToHeroAtNova === 'function') returnToHeroAtNova();
             }
           }
@@ -3710,7 +3718,8 @@
       }
 
       function unlockContentSegment() {
-        if (currentSegment === SEGMENT_CONTENT) return;
+        if (isTransitioning) return;
+        isTransitioning = true;
         currentSegment = SEGMENT_CONTENT;
         targetMorph = 1.0;
         targetFlank = 1.0;
@@ -3737,22 +3746,23 @@
           showToast("// COSMOS OBSERVER LOADED");
         }
         syncConstellationBtn();
+
+        setTimeout(() => {
+          isTransitioning = false;
+        }, 600);
       }
 
       function returnToHeroAtNova() {
-        if (currentSegment === SEGMENT_HERO) return;
+        if (isTransitioning) return;
+        if (currentSegment === SEGMENT_HERO && targetFlank === 0.0) return;
+        isTransitioning = true;
         currentSegment = SEGMENT_HERO;
         targetFlank = 0.0;
         targetMorph = 1.0;
         wheelScrollAccumulator = 1.0;
+        novaStopTimestamp = Date.now();
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        setTimeout(() => {
-          if (currentSegment === SEGMENT_HERO) {
-            document.body.style.overflowY = 'hidden';
-            document.documentElement.style.overflowY = 'hidden';
-          }
-        }, 400);
 
         const novaCue = document.getElementById('nova-scroll-cue');
         if (novaCue) {
@@ -3762,14 +3772,27 @@
         if (cosmicAudio && cosmicAudio.playClickChime) {
           cosmicAudio.playClickChime();
         }
+        if (window.showToast) {
+          showToast("// RETURNED TO NOVA CONSTELLATION");
+        }
         syncConstellationBtn();
+
+        setTimeout(() => {
+          if (currentSegment === SEGMENT_HERO) {
+            document.body.style.overflowY = 'hidden';
+            document.documentElement.style.overflowY = 'hidden';
+          }
+          isTransitioning = false;
+        }, 500);
       }
 
       function resetToSpiralGalaxy() {
+        isTransitioning = true;
         currentSegment = SEGMENT_HERO;
         targetMorph = 0.0;
         targetFlank = 0.0;
         wheelScrollAccumulator = 0.0;
+        novaStopTimestamp = 0;
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
         document.body.style.overflowY = 'hidden';
@@ -3787,6 +3810,10 @@
         if (window.showToast) {
           showToast("// RETURNED TO SPIRAL GALAXY");
         }
+
+        setTimeout(() => {
+          isTransitioning = false;
+        }, 500);
       }
 
       window.unlockContentSegment = unlockContentSegment;
@@ -3803,34 +3830,45 @@
       }
 
       function updateScrollMorph() {
-        if (!introComplete) return;
-        if (currentSegment === SEGMENT_HERO) {
-          targetMorph = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
-          targetFlank = 0.0;
-        } else if (currentSegment === SEGMENT_CONTENT) {
-          targetMorph = 1.0;
-          targetFlank = 1.0;
+        if (!introComplete || isTransitioning) return;
+        if (currentSegment === SEGMENT_CONTENT) {
+          const pageScrollY = window.scrollY || window.pageYOffset || 0;
+          // Scrolled back up near the top of the page: load back NOVA!
+          if (pageScrollY <= 80) {
+            returnToHeroAtNova();
+          }
         }
       }
 
       function onWheelScroll(e) {
-        if (!introComplete) return;
+        if (!introComplete || isTransitioning) return;
 
         if (currentSegment === SEGMENT_HERO) {
-          if (e.deltaY > 0) {
-            // Scrolling down moves toward NOVA (hard-stops at 1.0, will not scroll past!)
-            wheelScrollAccumulator += e.deltaY * 0.0020;
+          if (wheelScrollAccumulator < 1.0) {
+            // Morphing between Spiral Galaxy and NOVA
+            wheelScrollAccumulator += e.deltaY * 0.0022;
             wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
             targetMorph = wheelScrollAccumulator;
             targetFlank = 0.0;
-          } else if (e.deltaY < 0) {
-            // Scrolling up
-            if (wheelScrollAccumulator >= 0.96) {
-              // Stopped at NOVA: scrolling up loads content!
+
+            if (wheelScrollAccumulator >= 1.0) {
+              novaStopTimestamp = Date.now();
+            }
+          } else {
+            // Already at NOVA (wheelScrollAccumulator === 1.0)
+            const elapsed = Date.now() - novaStopTimestamp;
+            // Enforce hard-stop dead zone for 350ms so a single continuous flick halts cleanly at NOVA
+            if (elapsed < 350) {
+              return;
+            }
+
+            // User scrolls after halting at NOVA:
+            if (e.deltaY > 6) {
+              // Scrolled forward / swiped up: load content!
               unlockContentSegment();
-            } else {
-              // Morphing backwards towards Spiral Galaxy
-              wheelScrollAccumulator += e.deltaY * 0.0020;
+            } else if (e.deltaY < -8) {
+              // Scrolled backward: morph back toward Spiral Galaxy!
+              wheelScrollAccumulator += e.deltaY * 0.0022;
               wheelScrollAccumulator = THREE.MathUtils.clamp(wheelScrollAccumulator, 0.0, 1.0);
               targetMorph = wheelScrollAccumulator;
               targetFlank = 0.0;
@@ -3838,8 +3876,8 @@
           }
         } else if (currentSegment === SEGMENT_CONTENT) {
           const pageScrollY = window.scrollY || window.pageYOffset || 0;
-          if (pageScrollY <= 2 && e.deltaY < -20) {
-            // Scrolled to top of blog and scrolled up: return to NOVA
+          // When reading blog content, scrolling up near top loads back NOVA!
+          if (pageScrollY <= 150 && e.deltaY < -4) {
             returnToHeroAtNova();
           }
         }
